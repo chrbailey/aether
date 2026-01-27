@@ -1,0 +1,15 @@
+# AETHER Core ML Dependencies
+torch>=2.0.0
+numpy>=1.24.0
+scipy>=1.11.0
+
+# Inference server
+fastapi>=0.100.0
+uvicorn>=0.23.0
+
+# Training & data
+pandas>=2.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0

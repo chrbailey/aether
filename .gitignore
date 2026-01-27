@@ -1,0 +1,11 @@
+node_modules/
+dist/
+data/
+*.pyc
+__pycache__/
+.env
+*.onnx
+*.pt
+*.pth
+.pytest_cache/
+*.egg-info/

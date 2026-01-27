@@ -1,0 +1,29 @@
+{
+  "name": "aether",
+  "version": "0.1.0",
+  "description": "AETHER: Adaptive Epistemic Trust through Hierarchical Event Reasoning",
+  "type": "module",
+  "main": "mcp-server/dist/index.js",
+  "scripts": {
+    "build": "tsc -p mcp-server/tsconfig.json",
+    "start": "node mcp-server/dist/index.js",
+    "dev": "tsx watch mcp-server/src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:python": "cd core && python -m pytest tests/ -v",
+    "lint": "eslint mcp-server/src --ext .ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.16"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
