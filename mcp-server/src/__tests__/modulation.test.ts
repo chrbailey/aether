@@ -87,8 +87,8 @@ describe('computeUncertaintyFactor', () => {
     });
 
     const factor = computeUncertaintyFactor(highEpistemic);
-    // 1 + (0.8 * 0.875) * 0.5 = 1 + 0.35 = 1.35
-    expect(factor).toBeGreaterThan(1.3);
+    // v2: 1 + (0.875 - 0.3) * 0.5 = 1.2875
+    expect(factor).toBeGreaterThan(1.2);
   });
 
   it('THE KEY INSIGHT: high aleatoric uncertainty does NOT tighten', () => {
@@ -100,8 +100,8 @@ describe('computeUncertaintyFactor', () => {
     });
 
     const factor = computeUncertaintyFactor(highAleatoric);
-    // 1 + (0.8 * 0.125) * 0.5 = 1 + 0.05 = 1.05
-    expect(factor).toBeLessThan(1.1);
+    // v2: 1 + (0.125 - 0.3) * 0.5 = 1 - 0.0875 = 0.9125 (relaxes!)
+    expect(factor).toBeLessThan(1.0);
   });
 
   it('same total uncertainty produces different factors based on decomposition', () => {
@@ -127,7 +127,7 @@ describe('computeUncertaintyFactor', () => {
     expect(epistemicFactor - aleatoricFactor).toBeGreaterThan(0.15);
   });
 
-  it('zero uncertainty produces factor of 1.0 (no tightening)', () => {
+  it('zero epistemic ratio relaxes below 1.0 (model knows what it knows)', () => {
     const noUncertainty = makeUncertainty({
       total: 0,
       epistemic: 0,
@@ -135,7 +135,8 @@ describe('computeUncertaintyFactor', () => {
       epistemicRatio: 0,
     });
 
-    expect(computeUncertaintyFactor(noUncertainty)).toBeCloseTo(1.0);
+    // v2: 1 + (0 - 0.3) * 0.5 = 0.85 — full relaxation below baseline
+    expect(computeUncertaintyFactor(noUncertainty)).toBeCloseTo(0.85);
   });
 });
 
@@ -152,15 +153,16 @@ describe('computeCalibrationFactor', () => {
     expect(poorFactor).toBeGreaterThan(goodFactor);
   });
 
-  it('perfect calibration produces factor near 1.0', () => {
+  it('perfect calibration relaxes below 1.0 (earned trust)', () => {
     const perfectCal = makeCalibration({ ece: 0.0 });
-    expect(computeCalibrationFactor(perfectCal)).toBeCloseTo(1.0);
+    // v2: 1 + (0.0 - 0.05) * 0.4 = 0.98
+    expect(computeCalibrationFactor(perfectCal)).toBeCloseTo(0.98);
   });
 
   it('maximum calibration error (ECE=1.0) produces maximum factor', () => {
     const worstCal = makeCalibration({ ece: 1.0 });
-    // 1 + (1 - 0) * 0.4 = 1.4
-    expect(computeCalibrationFactor(worstCal)).toBeCloseTo(1.4);
+    // v2: 1 + (1.0 - 0.05) * 0.4 = 1.38
+    expect(computeCalibrationFactor(worstCal)).toBeCloseTo(1.38);
   });
 });
 
@@ -247,7 +249,7 @@ describe('computeEffectiveThresholds', () => {
 
     expect(extreme.driftThreshold).toBeGreaterThanOrEqual(0.02);
     expect(extreme.driftThreshold).toBeLessThanOrEqual(0.30);
-    expect(extreme.reviewGateAutoPass).toBeGreaterThanOrEqual(0.80);
+    expect(extreme.reviewGateAutoPass).toBeGreaterThanOrEqual(0.50);
     expect(extreme.reviewGateAutoPass).toBeLessThanOrEqual(0.99);
     expect(extreme.conformanceDeviation).toBeGreaterThanOrEqual(0.01);
     expect(extreme.conformanceDeviation).toBeLessThanOrEqual(0.15);

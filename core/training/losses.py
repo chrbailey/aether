@@ -138,7 +138,10 @@ class VICRegLoss(nn.Module):
 
 
 class SIGRegLoss(nn.Module):
-    """SIGReg regularization loss (Balestriero & LeCun, 2025).
+    """SIGReg regularization loss.
+
+    From LeJEPA: "Provable and Scalable Self-Supervised Learning Without the
+    Heuristics" (Balestriero & LeCun, 2025, arXiv 2511.08544).
 
     Unifies VICReg's separate variance + covariance terms into a single loss
     based on the log-sigmoid of eigenvalues of the representation covariance
@@ -154,9 +157,23 @@ class SIGRegLoss(nn.Module):
 
     Combined with MSE invariance for full JEPA-style training.
 
+    Implementation note: The official LeJEPA paper uses a random-projection
+    Epps-Pulley test (Cramer-Wold formulation) to enforce isotropic Gaussian
+    embeddings via sketching. Our implementation uses eigenvalue-based SIGReg
+    (log-sigmoid of covariance eigenvalues) which achieves the same goal —
+    preventing latent collapse and enforcing isotropy — through direct
+    eigendecomposition rather than random projection. Both are valid
+    formulations of the same underlying principle: maximizing the entropy
+    of the embedding distribution under a Gaussian assumption.
+
     Note: Uses CPU fallback for eigendecomposition since torch.linalg.eigvalsh
     is not yet implemented on MPS. The 128×128 covariance matrix transfer is
     negligible overhead, and autograd flows correctly across devices.
+
+    References:
+        - LeJEPA: https://arxiv.org/abs/2511.08544
+        - Official repo: https://github.com/facebookresearch/LeJEPA
+        - VICReg (predecessor): https://arxiv.org/abs/2105.04906
 
     Args:
         invariance_weight: Weight for invariance (prediction accuracy) loss.

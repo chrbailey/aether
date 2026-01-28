@@ -142,6 +142,48 @@ effective_threshold = base × mode_factor × uncertainty_factor × calibration_f
 
 ---
 
+## Theoretical Foundations
+
+AETHER's architecture maps directly onto the JEPA ecosystem and LeCun's broader research program. This section makes the connections explicit.
+
+### Mapping to the JEPA Framework
+
+| AETHER Component | JEPA Role | Reference |
+|---|---|---|
+| `EventEncoder` (StructuralEncoder → TemporalEncoder → ContextEncoder) | **Target encoder** — maps raw observations to latent representations `z_t ∈ R^128` | JEPA (LeCun, 2022): "An encoder that maps an observation to a representation" |
+| `TransitionModel` (`f(z_t, a_t, c_t) → z_{t+1}`) | **JEPA predictor** — predicts in latent space, never reconstructs raw events | JEPA: "A predictor module that predicts the representation of y from the representation of x" |
+| `EnergyScorer` (`‖z_hat − z‖² → sigmoid`) | **Energy function** — scores transition plausibility in latent space | [A Tutorial on Energy-Based Learning](https://proceedings.mlr.press/v1/lecun06a.html) (LeCun et al., 2006); [A Path Towards Autonomous Machine Intelligence](https://openreview.net/forum?id=BZ5a1r-kVsf) (LeCun, 2022) |
+| `SIGRegLoss` | **Collapse prevention** — eigenvalue-based regularization of the covariance matrix | [LeJEPA](https://arxiv.org/abs/2511.08544) (Balestriero & LeCun, 2025): SIGReg via Epps-Pulley. We use the eigenvalue formulation |
+| `VICRegLoss` | **Collapse prevention** (alternative) — Variance-Invariance-Covariance regularization | [VICReg](https://arxiv.org/abs/2105.04906) (Bardes, Ponce & LeCun, ICLR 2022) |
+| `LatentVariable` (Gumbel-Softmax) | **Latent variable** — categorical path variants enabling multi-modal predictions | JEPA: latent variable `z` that captures information about `y` not present in `x` |
+
+### What AETHER Adds
+
+The components above are adapted from the JEPA ecosystem. AETHER's novel contribution is combining them into a **governance-aware pipeline** for process mining:
+
+1. **Epistemic/Aleatoric Decomposition** (`UncertaintyDecomposer`) — Ensemble variance decomposition via the law of total variance. Separates reducible model uncertainty from irreducible process noise. Not present in I-JEPA, V-JEPA, or LeJEPA.
+
+2. **Adaptive Governance Modulation** (`GovernanceModulation`) — The formula `effective_threshold = base × mode_factor × uncertainty_factor × calibration_factor` uses the epistemic ratio to dynamically adjust governance. High epistemic uncertainty → tighten oversight. High aleatoric uncertainty → leave governance alone.
+
+3. **Adaptive Conformal Prediction** (`AdaptiveConformalPredictor`) — Distribution-free prediction sets (Gibbs & Candes, NeurIPS 2021) wrapped around the JEPA predictor, providing coverage guarantees on non-exchangeable business event data.
+
+4. **Asymmetric Trust State Machine** (`AutonomyController`) — Trust is earned slowly through sustained calibration and lost quickly through single failures. This operationalizes the energy-based scoring into real governance decisions.
+
+### Energy-Based Model Connection
+
+LeCun's 2006 tutorial on Energy-Based Learning describes a framework where compatibility between inputs and outputs is measured by an energy function — low energy means compatible, high energy means incompatible. AETHER's `EnergyScorer` is a direct implementation of this:
+
+```
+E(z_t, a_t, z_{t+1}) = ‖TransitionModel(z_t, a_t, c_t) − z_{t+1}‖²
+```
+
+- **Low energy**: the actual next state matches the world model's prediction → plausible transition
+- **High energy**: surprise → anomalous event, process deviation, or conformance violation
+
+The `EnergyContrastiveLoss` trains this scorer with a margin-based contrastive objective: actual transitions should have low energy, random/corrupted transitions should have energy above the margin.
+
+---
+
 ## Key Algorithms
 
 ### Time2Vec (Kazemi et al., ICLR 2019)

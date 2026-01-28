@@ -27,3 +27,10 @@ export {
   summarizeTrustState,
   isActionPermitted,
 } from './autonomy-controller.js';
+
+export {
+  BASE_THRESHOLDS,
+  COEFFICIENTS,
+  CLAMP_BOUNDS,
+  GATE_DIRECTION,
+} from './aether.config.js';

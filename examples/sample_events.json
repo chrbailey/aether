@@ -1,0 +1,134 @@
+{
+  "description": "Synthetic purchase-to-pay (P2P) event log for AETHER examples. 3 cases with realistic activity sequences.",
+  "cases": [
+    {
+      "caseId": "PO-2024-001",
+      "events": [
+        {
+          "activity": "Create Purchase Requisition",
+          "resource": "buyer_01",
+          "timestamp": "2024-03-01T09:00:00Z",
+          "attributes": { "amount": 15000.00, "currency": "USD", "department": "manufacturing" }
+        },
+        {
+          "activity": "Approve Purchase Requisition",
+          "resource": "manager_01",
+          "timestamp": "2024-03-01T14:30:00Z",
+          "attributes": { "amount": 15000.00, "approval_level": "department" }
+        },
+        {
+          "activity": "Create Purchase Order",
+          "resource": "buyer_01",
+          "timestamp": "2024-03-02T10:15:00Z",
+          "attributes": { "amount": 15000.00, "vendor": "VENDOR-A", "po_type": "standard" }
+        },
+        {
+          "activity": "Receive Goods",
+          "resource": "warehouse_01",
+          "timestamp": "2024-03-10T08:00:00Z",
+          "attributes": { "quantity_received": 100, "quantity_ordered": 100 }
+        },
+        {
+          "activity": "Record Invoice",
+          "resource": "ap_clerk_01",
+          "timestamp": "2024-03-12T11:00:00Z",
+          "attributes": { "invoice_amount": 15000.00, "three_way_match": true }
+        },
+        {
+          "activity": "Process Payment",
+          "resource": "ap_clerk_01",
+          "timestamp": "2024-03-15T09:00:00Z",
+          "attributes": { "payment_amount": 15000.00, "payment_method": "wire" }
+        }
+      ]
+    },
+    {
+      "caseId": "PO-2024-002",
+      "events": [
+        {
+          "activity": "Create Purchase Requisition",
+          "resource": "buyer_02",
+          "timestamp": "2024-03-03T10:00:00Z",
+          "attributes": { "amount": 75000.00, "currency": "USD", "department": "IT" }
+        },
+        {
+          "activity": "Approve Purchase Requisition",
+          "resource": "manager_02",
+          "timestamp": "2024-03-03T16:00:00Z",
+          "attributes": { "amount": 75000.00, "approval_level": "department" }
+        },
+        {
+          "activity": "Approve Purchase Requisition",
+          "resource": "director_01",
+          "timestamp": "2024-03-04T09:00:00Z",
+          "attributes": { "amount": 75000.00, "approval_level": "director" }
+        },
+        {
+          "activity": "Create Purchase Order",
+          "resource": "buyer_02",
+          "timestamp": "2024-03-04T14:00:00Z",
+          "attributes": { "amount": 75000.00, "vendor": "VENDOR-B", "po_type": "standard" }
+        },
+        {
+          "activity": "Receive Goods",
+          "resource": "warehouse_02",
+          "timestamp": "2024-03-14T08:30:00Z",
+          "attributes": { "quantity_received": 48, "quantity_ordered": 50 }
+        },
+        {
+          "activity": "Record Invoice",
+          "resource": "ap_clerk_02",
+          "timestamp": "2024-03-16T10:00:00Z",
+          "attributes": { "invoice_amount": 72000.00, "three_way_match": false }
+        },
+        {
+          "activity": "Request Credit Memo",
+          "resource": "ap_clerk_02",
+          "timestamp": "2024-03-17T09:30:00Z",
+          "attributes": { "discrepancy_amount": 3000.00, "reason": "short_shipment" }
+        }
+      ]
+    },
+    {
+      "caseId": "PO-2024-003",
+      "events": [
+        {
+          "activity": "Create Purchase Requisition",
+          "resource": "buyer_01",
+          "timestamp": "2024-03-05T08:00:00Z",
+          "attributes": { "amount": 2500.00, "currency": "EUR", "department": "facilities" }
+        },
+        {
+          "activity": "Approve Purchase Requisition",
+          "resource": "manager_03",
+          "timestamp": "2024-03-05T08:45:00Z",
+          "attributes": { "amount": 2500.00, "approval_level": "department" }
+        },
+        {
+          "activity": "Create Purchase Order",
+          "resource": "buyer_01",
+          "timestamp": "2024-03-05T09:30:00Z",
+          "attributes": { "amount": 2500.00, "vendor": "VENDOR-C", "po_type": "rush" }
+        },
+        {
+          "activity": "Receive Goods",
+          "resource": "warehouse_01",
+          "timestamp": "2024-03-06T14:00:00Z",
+          "attributes": { "quantity_received": 25, "quantity_ordered": 25 }
+        },
+        {
+          "activity": "Record Invoice",
+          "resource": "ap_clerk_01",
+          "timestamp": "2024-03-07T10:00:00Z",
+          "attributes": { "invoice_amount": 2500.00, "three_way_match": true }
+        },
+        {
+          "activity": "Process Payment",
+          "resource": "ap_clerk_01",
+          "timestamp": "2024-03-08T09:00:00Z",
+          "attributes": { "payment_amount": 2500.00, "payment_method": "ach" }
+        }
+      ]
+    }
+  ]
+}

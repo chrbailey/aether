@@ -1,93 +1,290 @@
-# AETHER
+<p align="center">
+  <strong>AETHER</strong><br>
+  <em>Process-JEPA: Extending LeCun's Joint Embedding Architecture to Business Event Prediction</em>
+</p>
 
-**Adaptive Epistemic Trust through Hierarchical Event Reasoning**
+<p align="center">
+  <a href="https://github.com/christopherbailey/aether/actions/workflows/ci.yml"><img src="https://github.com/christopherbailey/aether/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  &nbsp;
+  <a href="#jepa-for-processes">Why JEPA?</a> &bull;
+  <a href="#the-problem">The Problem</a> &bull;
+  <a href="#how-it-works">How It Works</a> &bull;
+  <a href="#quick-start">Quick Start</a> &bull;
+  <a href="docs/ARCHITECTURE.md">Architecture</a>
+</p>
 
-A system that learns adaptive governance thresholds from event sequences using LeCun-inspired world models with principled uncertainty decomposition.
+---
 
-## What It Does
+## JEPA for Processes
 
-AETHER predicts what happens next in business processes (SAP procurement, order-to-cash, etc.) and decomposes its uncertainty into **epistemic** (reducible with more data) vs. **aleatoric** (irreducible randomness). This decomposition drives governance: high epistemic uncertainty tightens oversight, while high aleatoric uncertainty does not.
+If [JEPA](https://openreview.net/forum?id=BZ5a1r-kVsf) can learn to predict the physical world from images and video, can it predict how business processes unfold?
 
-### Key Components
+**AETHER is the first JEPA implementation for discrete business event sequences.** It takes ideas from Yann LeCun's Joint Embedding Predictive Architecture and applies them to enterprise workflow prediction — purchase-to-pay, order-to-cash, and procurement processes.
 
-- **Event Encoder** — Transforms business events into latent representations using activity/resource vocabularies and Time2Vec temporal encoding
-- **World Model** — Predicts future latent states given current state + governance action, with path variant sampling for multiple futures
-- **Critic** — Calibration tracking (ECE/MCE/Brier), epistemic/aleatoric decomposition via ensemble disagreement, and adaptive conformal prediction sets
-- **MCP Server** — Exposes governance tools via the [Model Context Protocol](https://modelcontextprotocol.io) for integration with AI assistants
+The key ideas from the JEPA ecosystem that AETHER adapts:
 
-## Architecture
+| JEPA Concept | Original Domain | AETHER Application |
+|---|---|---|
+| Joint Embedding | Images (I-JEPA), Video (V-JEPA) | Business event sequences |
+| Latent-space prediction | Pixel masking, frame prediction | Event transition: `f(z_t, action, variant) → z_{t+1}` |
+| Energy-based scoring | LeCun's [EBM framework](https://proceedings.mlr.press/v1/lecun06a.html) (2006) | Process conformance anomaly detection |
+| SIGReg loss | [LeJEPA](https://arxiv.org/abs/2511.08544) (Balestriero & LeCun, 2025) | Latent collapse prevention via eigenvalue regularization |
+| VICReg loss | [VICReg](https://arxiv.org/abs/2105.04906) (Bardes, Ponce & LeCun, 2022) | Variance-Invariance-Covariance as alternative regularizer |
 
-```
-core/                   Python ML components
-├── encoder/            Event encoding (activity vocab, Time2Vec)
-├── world_model/        Transition, energy scoring, hierarchical prediction
-├── critic/             Calibration, uncertainty decomposition, conformal prediction
-├── training/           Data loading, loss functions, training loop
-├── inference/          FastAPI inference server
-├── data/               Data pipeline (SAP, BPI 2019, OCEL, CSV loaders)
-└── tests/              Python test suite
+**The novel contribution:** AETHER combines these JEPA components with epistemic uncertainty decomposition and adaptive governance. The model decomposes uncertainty into what's _reducible_ (epistemic) vs. what's _inherently random_ (aleatoric), and uses that decomposition to dynamically tighten or relax governance thresholds — no static thresholds, no manual tuning. The system earns trust through demonstrated calibration.
 
-mcp-server/             TypeScript MCP server
-├── src/governance/     Modulation, autonomy controller, immutable safety floors
-├── src/bridge/         Pinecone, PromptSpeak, Python inference bridges
-├── src/tools/          MCP tool definitions (governance, calibration, predict)
-├── src/types/          Type definitions
-└── src/__tests__/      TypeScript test suite
-```
+> _"A possible path towards building a world model is to learn hierarchical representations of the world that capture both short-term and long-term dependencies."_ — LeCun, [A Path Towards Autonomous Machine Intelligence](https://openreview.net/forum?id=BZ5a1r-kVsf) (2022)
+>
+> AETHER explores the complementary question: can JEPA model enterprise workflows, where the "world" is a structured sequence of business events?
 
-## Quick Start
+---
 
-### TypeScript MCP Server
+## The Problem
 
-```bash
-npm install
-npm run build
-npm test
+Every AI governance system today uses **static thresholds**:
+- Flag if confidence < 0.90
+- Review if drift > 0.15
+- Block if uncertainty > 0.80
 
-# Start MCP server
-npm start
-```
+These break immediately. A well-calibrated model gets held back by thresholds tuned for a bad one. A degrading model sails through gates set during its best day.
 
-### Python ML Core
+Worse: **not all uncertainty is equal**. A model that's uncertain because it hasn't seen enough data (epistemic) should trigger more review — human judgment helps. A model that's uncertain because the process is inherently random (aleatoric) should _not_ trigger more review — no amount of human oversight reduces coin-flip randomness.
 
-```bash
-pip install -r requirements.txt
-cd core && python -m pytest tests/ -v
+No existing system makes this distinction.
 
-# Start inference server
-python -m core.inference.server
-```
+---
 
-## Governance Model
+## How It Works
 
-The governance modulation formula:
+### The Core Formula
 
 ```
 effective_threshold = base × mode_factor × uncertainty_factor × calibration_factor
 ```
 
-Where:
-- **mode_factor** scales by operational mode (flexible → standard → strict → forbidden)
-- **uncertainty_factor** tightens governance when epistemic uncertainty is high
-- **calibration_factor** adjusts based on historical prediction accuracy
+Each factor is independently computed and composable:
 
-### Safety Boundaries
+| Factor | What it captures | Effect |
+|--------|-----------------|--------|
+| **Mode** | Operational context (flexible &rarr; strict &rarr; forbidden) | Symbolic governance from PromptSpeak modes |
+| **Uncertainty** | Epistemic ratio of total uncertainty | Only _reducible_ uncertainty tightens governance |
+| **Calibration** | Recent ECE/MCE/Brier score | Poorly calibrated models get tighter oversight |
 
-- **Immutable floor**: `forbidden` mode, sensitive data handling, Dempster-Shafer conflict > 0.7, and circuit breaker floor cannot be overridden
-- **Asymmetric trust**: Slow ascent (sustained calibration required), fast descent (single critical failure triggers lockdown)
+The key insight: **aleatoric uncertainty is ignored in governance tightening.** This is the formal contribution. It means the system won't waste human attention on inherently random outcomes.
+
+### Asymmetric Trust
+
+Trust is earned slowly and lost quickly:
+
+```
+SUPERVISED ──[10 calibrated windows]──> GUIDED
+GUIDED     ──[20 calibrated windows]──> COLLABORATIVE
+COLLABORATIVE ──[50 calibrated windows]──> AUTONOMOUS
+
+Any level ──[1 critical miss]──> immediate demotion
+Any level ──[immutable violation]──> reset to SUPERVISED
+```
+
+This mirrors real-world trust: it takes months to build and seconds to destroy.
+
+### Safety Floor
+
+Some constraints never relax, regardless of trust level or calibration:
+- **Forbidden mode** &rarr; always block
+- **Sensitive data patterns** (SSN, API keys, private keys) &rarr; always hold
+- **Dempster-Shafer conflict > 0.7** &rarr; always review
+- **Circuit breaker floor** &rarr; 3+ consecutive failures = block
+- **Uncertainty ceiling > 0.95** &rarr; always hold
+
+---
+
+## Quick Start
+
+### TypeScript (Governance + MCP Server)
+
+```bash
+git clone https://github.com/christopherbailey/aether.git
+cd aether
+npm install
+npm run build
+npm test          # 92 tests — governance, modulation, bridge, tools
+```
+
+### Python (ML Core)
+
+```bash
+pip install -r requirements.txt
+cd core && python -m pytest tests/ -v   # 303 tests — encoder, world model, critic, training, data
+```
+
+### Run Both Together
+
+```bash
+# Terminal 1: Python inference server
+python -m core.inference.server          # Starts on localhost:8712
+
+# Terminal 2: MCP server (connects to Claude, Cursor, etc.)
+npm start
+```
+
+That's it. AETHER exposes 6 MCP tools that any AI assistant can call to get uncertainty-aware predictions and governance decisions.
+
+---
+
+## Architecture
+
+```
+                          MCP Tools (6)
+                    predict_next_event
+                    predict_outcome
+                    get_calibration
+                    get_autonomy_level
+                    get_effective_thresholds
+                    evaluate_gate
+                              |
+                    TypeScript MCP Server
+                    ├── Governance Modulation ← aether.config.ts
+                    ├── Autonomy Controller     (asymmetric trust)
+                    ├── Immutable Constraints    (safety floor)
+                    │         |
+                    │    HTTP bridge (:8712)
+                    │         |
+                    Python FastAPI Server
+                    ├── EventEncoder            (activity + time + context → 128D)
+                    ├── TransitionModel          (JEPA predictor: z_t → z_{t+1})
+                    ├── EnergyScorer            (energy-based anomaly scoring)
+                    ├── HierarchicalPredictor    (activity / phase / outcome)
+                    ├── LatentVariable          (Gumbel-Softmax path variants)
+                    ├── UncertaintyDecomposer    (epistemic vs. aleatoric)
+                    ├── CalibrationTracker       (ECE / MCE / Brier)
+                    └── ConformalPredictor       (distribution-free prediction sets)
+```
+
+### Python Core (`core/`)
+
+| Module | Purpose |
+|--------|---------|
+| `encoder/` | Event &rarr; 128D latent state via vocabularies + Time2Vec + causal transformer |
+| `world_model/` | JEPA-style transition model with energy scoring and hierarchical predictions |
+| `critic/` | Epistemic/aleatoric decomposition, calibration tracking, adaptive conformal inference |
+| `training/` | VICReg + SIGReg loss functions, multi-loss training loop, checkpoints |
+| `inference/` | FastAPI server with `/predict`, `/calibration`, `/health` endpoints |
+| `data/` | Unified pipeline for SAP, BPI 2019, OCEL 2.0, and CSV event logs |
+
+### TypeScript MCP Server (`mcp-server/`)
+
+| Module | Purpose |
+|--------|---------|
+| `governance/` | Compositional modulation, autonomy state machine, immutable safety |
+| `bridge/` | HTTP client to Python server with conservative fallbacks |
+| `tools/` | 6 MCP tools for predictions, calibration, and governance decisions |
+| `types/` | Full type system mirroring Python structures |
+
+---
 
 ## Configuration
+
+All governance tuning lives in one file: [`mcp-server/src/governance/aether.config.ts`](mcp-server/src/governance/aether.config.ts)
+
+### Base Thresholds
+
+```typescript
+export const BASE_THRESHOLDS = {
+  driftThreshold:       0.15,   // Concept drift detection
+  reviewGateAutoPass:   0.92,   // Auto-pass confidence
+  threatActivation:     0.60,   // Threat level activation
+  conformanceDeviation: 0.05,   // Process conformance
+  sayDoGap:             0.20,   // Say-Do consistency
+  knowledgePromotion:   0.75,   // Knowledge promotion score
+};
+```
+
+### Modulation Coefficients
+
+```typescript
+export const COEFFICIENTS = {
+  modeStrength:          0.3,   // Governance mode sensitivity
+  uncertaintyStrength:   0.5,   // Epistemic uncertainty sensitivity
+  calibrationStrength:   0.4,   // Calibration quality sensitivity
+};
+```
+
+### Clamp Bounds
+
+Every threshold is bounded to prevent pathological behavior. See [`aether.config.ts`](mcp-server/src/governance/aether.config.ts) for the full configuration.
+
+### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `AETHER_PYTHON_URL` | `http://localhost:8712` | Python inference server URL |
+| `AETHER_BPI2019_PATH` | — | Path to BPI 2019 dataset JSON file |
 
-## Requirements
+---
 
-- **Node.js** ≥ 20.0.0
-- **Python** ≥ 3.9
-- **PyTorch** ≥ 2.0.0
+## MCP Tools
+
+AETHER exposes 6 tools via the [Model Context Protocol](https://modelcontextprotocol.io):
+
+| Tool | Description |
+|------|-------------|
+| `predict_next_event` | Next activity predictions with uncertainty decomposition and conformal sets |
+| `predict_outcome` | Case outcome prediction (on-time, rework, remaining hours) |
+| `get_calibration` | Current model calibration metrics (ECE, MCE, Brier) |
+| `get_autonomy_level` | Trust state: SUPERVISED &rarr; GUIDED &rarr; COLLABORATIVE &rarr; AUTONOMOUS |
+| `get_effective_thresholds` | All 6 adaptive thresholds with full modulation breakdown |
+| `evaluate_gate` | Allow/hold/block decision with audit trail |
+
+### Example: Claude Desktop Integration
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "aether": {
+      "command": "node",
+      "args": ["/path/to/aether/mcp-server/dist/index.js"]
+    }
+  }
+}
+```
+
+---
+
+## Key References
+
+### JEPA Ecosystem (LeCun et al.)
+- **JEPA** — LeCun, 2022. [A Path Towards Autonomous Machine Intelligence](https://openreview.net/forum?id=BZ5a1r-kVsf). The foundational architecture.
+- **LeJEPA** — Balestriero & LeCun, 2025. [Provable and Scalable Self-Supervised Learning Without the Heuristics](https://arxiv.org/abs/2511.08544) (arXiv 2511.08544). SIGReg regularization via Epps-Pulley / random-projection. AETHER uses the eigenvalue formulation. ([Official repo](https://github.com/facebookresearch/LeJEPA))
+- **I-JEPA** — Assran et al., CVPR 2023. Joint embedding for images.
+- **V-JEPA** — Bardes et al., 2024. Joint embedding for video.
+- **VICReg** — Bardes, Ponce & LeCun, ICLR 2022. [Variance-Invariance-Covariance Regularization](https://arxiv.org/abs/2105.04906).
+- **Energy-Based Models** — LeCun et al., 2006. [A Tutorial on Energy-Based Learning](https://proceedings.mlr.press/v1/lecun06a.html). The theoretical framework for AETHER's anomaly scoring.
+
+### Uncertainty & Calibration
+- **Adaptive Conformal Inference** — Gibbs & Candes, NeurIPS 2021. Distribution-free prediction sets.
+- **Law of Total Variance** — Classic. Epistemic/aleatoric uncertainty decomposition.
+
+### Temporal Encoding
+- **Time2Vec** — Kazemi et al., ICLR 2019. Continuous temporal encoding.
+
+---
+
+## Testing
+
+```bash
+npm test                          # TypeScript: 92 tests
+cd core && python -m pytest tests/ -v   # Python: 303 tests
+npm run test:coverage             # TypeScript coverage report
+npm run test:python:coverage      # Python coverage report
+npm run test:all                  # Run everything
+```
+
+CI runs automatically on push to `main` and all PRs via GitHub Actions.
+
+---
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) &mdash; Christopher Bailey, 2026

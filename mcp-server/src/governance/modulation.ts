@@ -29,32 +29,11 @@ import type { CalibrationMetrics } from '../types/predictions.js';
 import type { AutonomyLevel } from '../types/autonomy.js';
 import { GOVERNANCE_MODES, IMMUTABLE_CONSTRAINTS } from '../types/governance.js';
 import { AUTONOMY_RANK } from '../types/autonomy.js';
-
-/**
- * Base thresholds — the static values these systems currently use.
- * AETHER makes them dynamic by applying modulation factors.
- */
-const BASE_THRESHOLDS = {
-  driftThreshold: 0.15,         // PromptSpeak: driftThreshold
-  reviewGateAutoPass: 0.92,     // EFC: auto_pass_threshold
-  threatActivation: 0.60,       // Unified Belief System
-  conformanceDeviation: 0.05,   // SAP: conformance > 5%
-  sayDoGap: 0.20,               // SmallCap: Say-Do gap > 20%
-  knowledgePromotion: 0.75,     // Knowledge Hooks: Wilson score
-} as const;
-
-/**
- * Modulation coefficients — control the sensitivity of each factor.
- * These are the "meta-parameters" of the governance modulation.
- */
-const COEFFICIENTS = {
-  /** How much the governance mode affects the threshold */
-  modeStrength: 0.3,
-  /** How much epistemic uncertainty affects the threshold */
-  uncertaintyStrength: 0.5,
-  /** How much calibration quality affects the threshold */
-  calibrationStrength: 0.4,
-} as const;
+import {
+  BASE_THRESHOLDS,
+  COEFFICIENTS,
+  CLAMP_BOUNDS,
+} from './aether.config.js';
 
 /**
  * Compute the mode factor from a symbolic governance mode.
@@ -80,7 +59,9 @@ export function computeModeFactor(mode: GovernanceMode): number {
 /**
  * Compute the uncertainty factor from decomposed uncertainty.
  *
- * uncertainty_factor = 1 + (total × epistemic_ratio) × uncertaintyStrength
+ * v2: Bidirectional around a baseline epistemic ratio.
+ *
+ *   uncertainty_factor = 1 + (epistemic_ratio − baseline) × uncertaintyStrength
  *
  * Only epistemic uncertainty contributes — because epistemic uncertainty
  * means "we don't have enough data/evidence" and human review or
@@ -90,34 +71,38 @@ export function computeModeFactor(mode: GovernanceMode): number {
  *
  * This is the key formal insight of the paper.
  *
- * Returns > 1.0 when epistemic uncertainty is high (tighten governance).
- * Returns ≈ 1.0 when uncertainty is mostly aleatoric (don't tighten).
+ * Returns > 1.0 when epistemic ratio exceeds baseline (tighten — human review helps).
+ * Returns < 1.0 when epistemic ratio is below baseline (relax — model is confident
+ *   AND its uncertainty is mostly irreducible, so review adds no value).
+ * Returns = 1.0 at the baseline (neutral).
  */
 export function computeUncertaintyFactor(
   uncertainty: UncertaintyDecomposition,
 ): number {
-  const epistemicContribution = uncertainty.total * uncertainty.epistemicRatio;
-  return 1 + epistemicContribution * COEFFICIENTS.uncertaintyStrength;
+  const deviation = uncertainty.epistemicRatio - COEFFICIENTS.baselineEpistemicRatio;
+  return 1 + deviation * COEFFICIENTS.uncertaintyStrength;
 }
 
 /**
  * Compute the calibration factor from recent calibration metrics.
  *
- * calibration_factor = 1 + (1 - calibration_score) × calibrationStrength
+ * v2: Bidirectional around a target ECE.
  *
- * Where calibration_score = 1 - ECE (so perfect calibration = 1.0).
+ *   calibration_factor = 1 + (ece − target_ece) × calibrationStrength
  *
- * Poor calibration (high ECE) → factor > 1 → tighter governance.
- * Good calibration (low ECE)  → factor ≈ 1 → relaxes toward base.
+ * Poor calibration (ECE > target) → factor > 1 → tighter governance.
+ * Good calibration (ECE < target) → factor < 1 → earned relaxation.
+ * At target ECE                   → factor = 1 → neutral.
  *
- * The intuition: if the model's confidence estimates are unreliable,
- * we should trust them less and require more oversight.
+ * The intuition: a well-calibrated model has EARNED lower oversight.
+ * A poorly calibrated model needs MORE oversight because its
+ * confidence estimates can't be trusted.
  */
 export function computeCalibrationFactor(
   calibration: CalibrationMetrics,
 ): number {
-  const calibrationScore = 1 - Math.min(calibration.ece, 1.0);
-  return 1 + (1 - calibrationScore) * COEFFICIENTS.calibrationStrength;
+  const ece = Math.min(calibration.ece, 1.0);
+  return 1 + (ece - COEFFICIENTS.targetECE) * COEFFICIENTS.calibrationStrength;
 }
 
 /**
@@ -195,7 +180,7 @@ export function computeEffectiveThresholds(
   //
   // "Higher-is-stricter" thresholds: when we tighten, we RAISE the value.
   //   autoPass, threatActivation, promotion → multiply by combined factor
-  //   (but cap at reasonable bounds)
+  //   (but cap at reasonable bounds from config)
 
   const tighteningFactor = (m: GovernanceModulation) =>
     m.modeFactor * m.uncertaintyFactor * m.calibrationFactor;
@@ -203,39 +188,39 @@ export function computeEffectiveThresholds(
   // Lower-is-stricter: tightening divides
   const driftThreshold = clamp(
     BASE_THRESHOLDS.driftThreshold / tighteningFactor(modulations['driftThreshold']),
-    0.02,  // Never below 2% (would trigger on noise)
-    0.30,  // Never above 30% (would miss real drift)
+    CLAMP_BOUNDS.driftThreshold.min,
+    CLAMP_BOUNDS.driftThreshold.max,
   );
 
   const conformanceDeviation = clamp(
     BASE_THRESHOLDS.conformanceDeviation / tighteningFactor(modulations['conformanceDeviation']),
-    0.01,
-    0.15,
+    CLAMP_BOUNDS.conformanceDeviation.min,
+    CLAMP_BOUNDS.conformanceDeviation.max,
   );
 
   const sayDoGap = clamp(
     BASE_THRESHOLDS.sayDoGap / tighteningFactor(modulations['sayDoGap']),
-    0.05,
-    0.40,
+    CLAMP_BOUNDS.sayDoGap.min,
+    CLAMP_BOUNDS.sayDoGap.max,
   );
 
-  // Higher-is-stricter: tightening multiplies (but cap at 1.0 for probabilities)
+  // Higher-is-stricter: tightening multiplies (capped by config bounds)
   const reviewGateAutoPass = clamp(
     BASE_THRESHOLDS.reviewGateAutoPass * tighteningFactor(modulations['reviewGateAutoPass']),
-    0.80,  // Never below 80% (would auto-pass too much)
-    0.99,  // Never above 99% (would block almost everything)
+    CLAMP_BOUNDS.reviewGateAutoPass.min,
+    CLAMP_BOUNDS.reviewGateAutoPass.max,
   );
 
   const threatActivation = clamp(
     BASE_THRESHOLDS.threatActivation * tighteningFactor(modulations['threatActivation']),
-    0.40,
-    0.90,
+    CLAMP_BOUNDS.threatActivation.min,
+    CLAMP_BOUNDS.threatActivation.max,
   );
 
   const knowledgePromotion = clamp(
     BASE_THRESHOLDS.knowledgePromotion * tighteningFactor(modulations['knowledgePromotion']),
-    0.60,
-    0.95,
+    CLAMP_BOUNDS.knowledgePromotion.min,
+    CLAMP_BOUNDS.knowledgePromotion.max,
   );
 
   // Update modulations with direction-corrected effective thresholds
