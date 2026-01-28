@@ -25,5 +25,20 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "license": "MIT",
+  "author": "Christopher Bailey",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/christopherbailey/aether.git"
+  },
+  "keywords": [
+    "governance",
+    "uncertainty",
+    "epistemic",
+    "world-model",
+    "mcp",
+    "process-mining",
+    "adaptive-trust"
+  ]
 }

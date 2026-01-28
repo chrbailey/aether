@@ -40,9 +40,11 @@ from core.training.data_loader import EventSequenceDataset, collate_fn
 # Paths for real data / checkpoint (skip when unavailable)
 # ---------------------------------------------------------------------------
 
-VOCAB_PATH = Path("/Volumes/OWC drive/Dev/aether/data/events/vocabulary.json")
-CHECKPOINT_PATH = Path("/Volumes/OWC drive/Dev/aether/data/models/best.pt")
-TRAIN_CASES_PATH = Path("/Volumes/OWC drive/Dev/aether/data/events/train_cases.json")
+# Paths relative to project root (tests/ -> core/ -> project root)
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+VOCAB_PATH = _PROJECT_ROOT / "data" / "events" / "vocabulary.json"
+CHECKPOINT_PATH = _PROJECT_ROOT / "data" / "models" / "best.pt"
+TRAIN_CASES_PATH = _PROJECT_ROOT / "data" / "events" / "train_cases.json"
 
 _VOCAB_AVAILABLE = VOCAB_PATH.exists()
 _CHECKPOINT_AVAILABLE = CHECKPOINT_PATH.exists()

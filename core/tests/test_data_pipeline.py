@@ -37,7 +37,9 @@ from core.training.data_loader import EventSequenceDataset, collate_fn
 # Paths for real processed data (skip if not available)
 # ---------------------------------------------------------------------------
 
-EVENTS_DIR = Path("/Volumes/OWC drive/Dev/aether/data/events")
+# Paths relative to project root (tests/ -> core/ -> project root)
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+EVENTS_DIR = _PROJECT_ROOT / "data" / "events"
 TRAIN_CASES_PATH = EVENTS_DIR / "train_cases.json"
 VAL_CASES_PATH = EVENTS_DIR / "val_cases.json"
 VOCABULARY_PATH = EVENTS_DIR / "vocabulary.json"
@@ -784,8 +786,8 @@ class TestPipelineInit:
         pipeline = AetherDataPipeline(paths=custom)
         assert pipeline.paths["sap_sqlite"] == Path("/tmp/custom.sqlite")
         # Other paths should still have defaults
-        assert pipeline.paths["bpi2019_json"] == Path(
-            "/Volumes/OWC drive/Dev/SAP-workflow-mining/data/bpi/bpi_2019.json"
+        assert pipeline.paths["bpi2019_json"] == (
+            _PROJECT_ROOT / "data" / "external" / "bpi_2019.json"
         )
 
     def test_default_train_ratio(self):
