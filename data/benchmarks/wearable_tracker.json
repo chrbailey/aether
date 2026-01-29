@@ -1,17 +1,17 @@
 {
-  "benchmark": "AETHER Fitbit Governance Benchmark (v2 bidirectional)",
+  "benchmark": "AETHER Wearable Tracker Governance Benchmark (v2 bidirectional)",
   "dataset": {
-    "label": "Fitbit",
-    "data_dir": "/Volumes/OWC drive/Dev/aether/data/external/fitbit",
+    "label": "Wearable Tracker",
+    "data_dir": "/Volumes/OWC drive/Dev/aether/data/external/wearable_tracker",
     "total_cases": 218,
     "evaluated": 218,
     "needs_review": 53,
     "review_rate": 0.2431,
     "accuracy": 0.7569,
-    "source": "Fitbit NetSuite Export (2013-2016)"
+    "source": "Wearable Tracker NetSuite Export (2013-2016)"
   },
   "model": {
-    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/external/fitbit/models/best.pt",
+    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/external/wearable_tracker/models/best.pt",
     "calibration": {},
     "ensemble_size": 10,
     "noise_sigma": 0.1

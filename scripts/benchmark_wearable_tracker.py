@@ -1,5 +1,5 @@
 """
-Benchmark AETHER governance formula on Fitbit Customer Journey data.
+Benchmark AETHER governance formula on Wearable Tracker Customer Journey data.
 
 Evaluates v2 bidirectional formula: effective_threshold = base × mode × uncertainty × calibration
 """
@@ -31,7 +31,7 @@ BASE_THRESHOLDS = {
 }
 MODE_FACTORS = {"flexible": 1.0, "standard": 1.1, "strict": 1.2}
 
-DATA_DIR = AETHER_ROOT / "data" / "external" / "fitbit"
+DATA_DIR = AETHER_ROOT / "data" / "external" / "wearable_tracker"
 DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
 
 
@@ -175,7 +175,7 @@ def compute_metrics(tp, fp, tn, fn):
 
 def main():
     print("=" * 60)
-    print("FITBIT GOVERNANCE BENCHMARK")
+    print("WEARABLE TRACKER GOVERNANCE BENCHMARK")
     print("=" * 60)
 
     start_time = time.time()
@@ -245,16 +245,16 @@ def main():
 
     # Benchmark each mode
     benchmark_results = {
-        "benchmark": "AETHER Fitbit Governance Benchmark (v2 bidirectional)",
+        "benchmark": "AETHER Wearable Tracker Governance Benchmark (v2 bidirectional)",
         "dataset": {
-            "label": "Fitbit",
+            "label": "Wearable Tracker",
             "data_dir": str(DATA_DIR),
             "total_cases": len(cases),
             "evaluated": len(results),
             "needs_review": wrong_count,
             "review_rate": round(wrong_count / len(results), 4),
             "accuracy": round(accuracy, 4),
-            "source": "Fitbit NetSuite Export (2013-2016)"
+            "source": "Wearable Tracker NetSuite Export (2013-2016)"
         },
         "model": {
             "checkpoint": str(DATA_DIR / "models" / "best.pt"),

@@ -1,5 +1,5 @@
 """
-Train AETHER model on Fitbit NetSuite Customer Journey dataset.
+Train AETHER model on Wearable Tracker NetSuite Customer Journey dataset.
 
 Uses the same architecture as Sepsis/BPI models:
   EventEncoder → TransitionModel → EnergyScorer → HierarchicalPredictor
@@ -34,7 +34,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # --- Config ---
-DATA_DIR = AETHER_ROOT / "data" / "external" / "fitbit"
+DATA_DIR = AETHER_ROOT / "data" / "external" / "wearable_tracker"
 MODEL_DIR = DATA_DIR / "models"
 LATENT_DIM = 128
 N_EPOCHS = 50

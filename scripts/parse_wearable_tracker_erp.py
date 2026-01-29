@@ -1,11 +1,11 @@
 """
-Parse Fitbit ERP Export (NetSuite → SAP Conversion) into AETHER event log format.
+Parse Wearable Tracker ERP Export (NetSuite → SAP Conversion) into AETHER event log format.
 
 Reconstructs Order-to-Cash process from:
   - Sales Orders (102k orders with types: New, Correction, etc.)
   - RMAs (97k returns linked to customers)
 
-Source: Fitbit NetSuite export (2013-2016), pre-SAP conversion
+Source: Wearable Tracker NetSuite export (2013-2016), pre-SAP conversion
 """
 
 import csv
@@ -17,10 +17,10 @@ from pathlib import Path
 from typing import Optional, List, Dict, Tuple
 
 # Data paths
-FITBIT_ROOT = Path("/Volumes/OWC drive/_Archive/Fitbit - working files/Product Earth")
-SO_PATH = FITBIT_ROOT / "BSP 669 SAP Transaction Data Conversion/Extracts/6 - 156 - Sales Orders"
+WEARABLE_TRACKER_ROOT = Path("/Volumes/OWC drive/_Archive/Fitbit - working files/Product Earth")
+SO_PATH = WEARABLE_TRACKER_ROOT / "BSP 669 SAP Transaction Data Conversion/Extracts/6 - 156 - Sales Orders"
 
-OUTPUT_DIR = Path("/Volumes/OWC drive/Dev/aether/data/external/fitbit")
+OUTPUT_DIR = Path("/Volumes/OWC drive/Dev/aether/data/external/wearable_tracker")
 
 
 def parse_date(date_str: str) -> Optional[datetime]:
@@ -225,9 +225,9 @@ def reconstruct_customer_journeys(
         customer_id = customer.split()[0] if customer else "unknown"
 
         case = {
-            "caseId": f"fitbit_{customer_id}",
+            "caseId": f"wt_{customer_id}",
             "events": events,
-            "source": "fitbit_netsuite",
+            "source": "wearable_tracker_netsuite",
             "outcome": {
                 "onTime": not has_rma and not has_correction,
                 "rework": has_correction,
@@ -313,7 +313,7 @@ def compute_stats(cases: List[Dict]) -> Dict:
             "max": round(max(durations), 2),
             "mean": round(sum(durations) / len(durations), 2),
         },
-        "source": "Fitbit NetSuite Export (2013-2016)",
+        "source": "Wearable Tracker NetSuite Export (2013-2016)",
     }
 
 
@@ -328,7 +328,7 @@ def split_train_val(cases: List[Dict], train_ratio: float = 0.8, seed: int = 42)
 
 def main():
     print("=" * 60)
-    print("FITBIT ERP → AETHER EVENT LOG PARSER")
+    print("WEARABLE TRACKER ERP → AETHER EVENT LOG PARSER")
     print("=" * 60)
 
     # Load transaction data
@@ -356,9 +356,9 @@ def main():
     # Save
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    with open(OUTPUT_DIR / "fitbit_all_cases.json", "w") as f:
+    with open(OUTPUT_DIR / "wearable_tracker_all_cases.json", "w") as f:
         json.dump(cases, f)
-    print(f"\nSaved {len(cases):,} cases to fitbit_all_cases.json")
+    print(f"\nSaved {len(cases):,} cases to wearable_tracker_all_cases.json")
 
     with open(OUTPUT_DIR / "train_cases.json", "w") as f:
         json.dump(train_cases, f)
@@ -377,7 +377,7 @@ def main():
 
     # Print summary
     print("\n" + "=" * 60)
-    print("FITBIT CUSTOMER JOURNEY DATASET SUMMARY")
+    print("WEARABLE TRACKER CUSTOMER JOURNEY DATASET SUMMARY")
     print("=" * 60)
     print(f"Cases: {stats['total_cases']:,} (train: {stats['train_cases']:,}, val: {stats['val_cases']:,})")
     print(f"Events: {stats['total_events']:,}")
