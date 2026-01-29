@@ -1,9 +1,11 @@
 node_modules/
 dist/
 # Data directory (large files, user-specific paths)
-data/*
+/data/*
 # But include published benchmark results
-!data/benchmarks/
+!/data/benchmarks/
+# Keep core/data/ (Python source code, NOT data files)
+!core/data/
 *.pyc
 __pycache__/
 .env
