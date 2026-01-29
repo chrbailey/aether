@@ -20,9 +20,7 @@ Requires Node.js >= 20.
 ### Python (ML Core)
 
 ```bash
-pip install -r requirements.txt
-# Or for editable development install:
-pip install -e .
+pip install -e ".[dev]"    # Editable install with test dependencies (httpx, pytest, etc.)
 ```
 
 Requires Python >= 3.11 and PyTorch >= 2.0.
@@ -34,7 +32,7 @@ Requires Python >= 3.11 and PyTorch >= 2.0.
 npm test
 
 # Python — 303 tests (encoder, world model, critic, training, data)
-cd core && python -m pytest tests/ -v
+python -m pytest core/tests/ -v
 
 # Everything
 npm run test:all

@@ -113,8 +113,8 @@ npm test          # 92 tests — governance, modulation, bridge, tools
 ### Python (ML Core)
 
 ```bash
-pip install -r requirements.txt
-cd core && python -m pytest tests/ -v   # 303 tests — encoder, world model, critic, training, data
+pip install -e ".[dev]"              # Editable install with test dependencies
+python -m pytest core/tests/ -v      # 303 tests — encoder, world model, critic, training, data
 ```
 
 ### Run Both Together
@@ -275,7 +275,7 @@ Add to your `claude_desktop_config.json`:
 
 ```bash
 npm test                          # TypeScript: 92 tests
-cd core && python -m pytest tests/ -v   # Python: 303 tests
+python -m pytest core/tests/ -v   # Python: 303 tests
 npm run test:coverage             # TypeScript coverage report
 npm run test:python:coverage      # Python coverage report
 npm run test:all                  # Run everything
