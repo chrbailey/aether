@@ -19,7 +19,7 @@
 
 If [JEPA](https://openreview.net/forum?id=BZ5a1r-kVsf) can learn to predict the physical world from images and video, can it predict how business processes unfold?
 
-**AETHER is the first JEPA implementation for discrete business event sequences.** It takes ideas from Yann LeCun's Joint Embedding Predictive Architecture and applies them to enterprise workflow prediction — purchase-to-pay, order-to-cash, and procurement processes.
+**AETHER is JEPA implementation for discrete business event sequences.** It takes ideas from Yann LeCun's Joint Embedding Predictive Architecture and applies them to enterprise workflow prediction — purchase-to-pay, order-to-cash, and procurement processes.
 
 The key ideas from the JEPA ecosystem that AETHER adapts:
 
