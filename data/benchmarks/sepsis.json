@@ -1,0 +1,459 @@
+{
+  "benchmark": "AETHER Sepsis Governance Benchmark (v2 bidirectional)",
+  "dataset": {
+    "label": "Sepsis",
+    "data_dir": "/Volumes/OWC drive/Dev/aether/data/external/sepsis",
+    "total_cases": 210,
+    "evaluated": 210,
+    "skipped": 0,
+    "needs_review": 94,
+    "review_rate": 0.4476,
+    "accuracy": 0.5524,
+    "source": "Sepsis Cases - Event Log (Mannhardt 2016)"
+  },
+  "model": {
+    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/external/sepsis/models/best.pt",
+    "calibration": {
+      "ece": 0.13348500047411238,
+      "mce": 0.2417348159684075,
+      "brier": 0.12832517788606057
+    },
+    "ensemble_size": 10,
+    "noise_sigma": 0.09425313472747804
+  },
+  "timestamp": "2026-01-28T07:25:29.639317+00:00",
+  "evaluation_protocol": {
+    "ground_truth": "Case needs review if model's next-activity prediction is WRONG",
+    "calibration_target": "Next-activity prediction confidence",
+    "case_filter": "Skip cases with < 2 events",
+    "gate_tested": "reviewGateAutoPass (flag if confidence < threshold)"
+  },
+  "per_mode": {
+    "flexible": {
+      "mode_factor": 1.0,
+      "static": {
+        "tp": 87,
+        "fp": 25,
+        "tn": 91,
+        "fn": 7,
+        "precision": 0.7768,
+        "recall": 0.9255,
+        "f1": 0.8447,
+        "fpr": 0.2155,
+        "specificity": 0.7845,
+        "mcc": 0.7077,
+        "burden": 0.5333,
+        "total": 210,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 86,
+        "fp": 22,
+        "tn": 94,
+        "fn": 8,
+        "precision": 0.7963,
+        "recall": 0.9149,
+        "f1": 0.8515,
+        "fpr": 0.1897,
+        "mcc": 0.7215,
+        "burden": 0.5143,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0,
+        "threshold_min": 0.5,
+        "threshold_max": 0.5
+      },
+      "naive": {
+        "tp": 94,
+        "fp": 41,
+        "tn": 75,
+        "fn": 0,
+        "precision": 0.6963,
+        "recall": 1.0,
+        "f1": 0.821,
+        "fpr": 0.3534,
+        "mcc": 0.671,
+        "burden": 0.6429,
+        "threshold_mean": 0.735675,
+        "threshold_std": 0.003344,
+        "threshold_min": 0.722649,
+        "threshold_max": 0.748439
+      },
+      "factor_decomposition": {
+        "mode": 1.0,
+        "unc_epistemic": 0.853941212880207,
+        "unc_total": 1.294366676688549,
+        "calibration": 1.033394000189645
+      }
+    },
+    "standard": {
+      "mode_factor": 1.1,
+      "static": {
+        "tp": 87,
+        "fp": 25,
+        "tn": 91,
+        "fn": 7,
+        "precision": 0.7768,
+        "recall": 0.9255,
+        "f1": 0.8447,
+        "fpr": 0.2155,
+        "specificity": 0.7845,
+        "mcc": 0.7077,
+        "burden": 0.5333,
+        "total": 210,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 87,
+        "fp": 23,
+        "tn": 93,
+        "fn": 7,
+        "precision": 0.7909,
+        "recall": 0.9255,
+        "f1": 0.8529,
+        "fpr": 0.1983,
+        "mcc": 0.7241,
+        "burden": 0.5238,
+        "threshold_mean": 0.533887,
+        "threshold_std": 0.000373,
+        "threshold_min": 0.533086,
+        "threshold_max": 0.535001
+      },
+      "naive": {
+        "tp": 94,
+        "fp": 51,
+        "tn": 65,
+        "fn": 0,
+        "precision": 0.6483,
+        "recall": 1.0,
+        "f1": 0.7866,
+        "fpr": 0.4397,
+        "mcc": 0.6027,
+        "burden": 0.6905,
+        "threshold_mean": 0.809242,
+        "threshold_std": 0.003678,
+        "threshold_min": 0.794914,
+        "threshold_max": 0.823283
+      },
+      "factor_decomposition": {
+        "mode": 1.1,
+        "unc_epistemic": 0.853941212880207,
+        "unc_total": 1.294366676688549,
+        "calibration": 1.033394000189645
+      }
+    },
+    "strict": {
+      "mode_factor": 1.2,
+      "static": {
+        "tp": 87,
+        "fp": 25,
+        "tn": 91,
+        "fn": 7,
+        "precision": 0.7768,
+        "recall": 0.9255,
+        "f1": 0.8447,
+        "fpr": 0.2155,
+        "specificity": 0.7845,
+        "mcc": 0.7077,
+        "burden": 0.5333,
+        "total": 210,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 89,
+        "fp": 28,
+        "tn": 88,
+        "fn": 5,
+        "precision": 0.7607,
+        "recall": 0.9468,
+        "f1": 0.8436,
+        "fpr": 0.2414,
+        "mcc": 0.7062,
+        "burden": 0.5571,
+        "threshold_mean": 0.582422,
+        "threshold_std": 0.000407,
+        "threshold_min": 0.581548,
+        "threshold_max": 0.583638
+      },
+      "naive": {
+        "tp": 94,
+        "fp": 77,
+        "tn": 39,
+        "fn": 0,
+        "precision": 0.5497,
+        "recall": 1.0,
+        "f1": 0.7094,
+        "fpr": 0.6638,
+        "mcc": 0.4299,
+        "burden": 0.8143,
+        "threshold_mean": 0.88281,
+        "threshold_std": 0.004012,
+        "threshold_min": 0.867179,
+        "threshold_max": 0.898127
+      },
+      "factor_decomposition": {
+        "mode": 1.2,
+        "unc_epistemic": 0.853941212880207,
+        "unc_total": 1.294366676688549,
+        "calibration": 1.033394000189645
+      }
+    }
+  },
+  "uncertainty_analysis": {
+    "correct": {
+      "n": 116,
+      "epistemic_mean": 7.145e-05,
+      "aleatoric_mean": 0.00882913,
+      "total_mean": 0.00890058,
+      "confidence_mean": 0.7425
+    },
+    "wrong": {
+      "n": 94,
+      "epistemic_mean": 6.834e-05,
+      "aleatoric_mean": 0.00880265,
+      "total_mean": 0.00887099,
+      "confidence_mean": 0.3792
+    },
+    "separation_ratios": {
+      "epistemic": 0.96,
+      "aleatoric": 1.0,
+      "total": 1.0,
+      "epistemic_advantage": 0.96
+    }
+  },
+  "clinical_outcomes": {
+    "return_er": {
+      "n": 66,
+      "accuracy": 0.9697,
+      "avg_confidence": 0.8416,
+      "avg_epistemic": 7.035e-05
+    },
+    "no_return_er": {
+      "n": 144,
+      "accuracy": 0.3611,
+      "avg_confidence": 0.4599,
+      "avg_epistemic": 6.992e-05
+    },
+    "admission_ic": {
+      "n": 20,
+      "accuracy": 0.4,
+      "avg_confidence": 0.4893,
+      "avg_epistemic": 7.042e-05
+    }
+  },
+  "outcome_correlation": {
+    "ontime": {
+      "n": 144,
+      "accuracy": 0.3611,
+      "avg_confidence": 0.4599
+    },
+    "rework": {
+      "n": 78,
+      "accuracy": 0.8333,
+      "avg_confidence": 0.7712
+    }
+  },
+  "threshold_sweep": {
+    "0.5": {
+      "tp": 86,
+      "fp": 22,
+      "tn": 94,
+      "fn": 8,
+      "precision": 0.7963,
+      "recall": 0.9149,
+      "f1": 0.8515,
+      "fpr": 0.1897,
+      "specificity": 0.8103,
+      "mcc": 0.7215,
+      "burden": 0.5143,
+      "total": 210,
+      "threshold": 0.5
+    },
+    "0.6": {
+      "tp": 91,
+      "fp": 29,
+      "tn": 87,
+      "fn": 3,
+      "precision": 0.7583,
+      "recall": 0.9681,
+      "f1": 0.8505,
+      "fpr": 0.25,
+      "specificity": 0.75,
+      "mcc": 0.7215,
+      "burden": 0.5714,
+      "total": 210,
+      "threshold": 0.6
+    },
+    "0.7": {
+      "tp": 94,
+      "fp": 38,
+      "tn": 78,
+      "fn": 0,
+      "precision": 0.7121,
+      "recall": 1.0,
+      "f1": 0.8319,
+      "fpr": 0.3276,
+      "specificity": 0.6724,
+      "mcc": 0.692,
+      "burden": 0.6286,
+      "total": 210,
+      "threshold": 0.7
+    },
+    "0.8": {
+      "tp": 94,
+      "fp": 47,
+      "tn": 69,
+      "fn": 0,
+      "precision": 0.6667,
+      "recall": 1.0,
+      "f1": 0.8,
+      "fpr": 0.4052,
+      "specificity": 0.5948,
+      "mcc": 0.6297,
+      "burden": 0.6714,
+      "total": 210,
+      "threshold": 0.8
+    },
+    "0.85": {
+      "tp": 94,
+      "fp": 63,
+      "tn": 53,
+      "fn": 0,
+      "precision": 0.5987,
+      "recall": 1.0,
+      "f1": 0.749,
+      "fpr": 0.5431,
+      "specificity": 0.4569,
+      "mcc": 0.523,
+      "burden": 0.7476,
+      "total": 210,
+      "threshold": 0.85
+    },
+    "0.9": {
+      "tp": 94,
+      "fp": 85,
+      "tn": 31,
+      "fn": 0,
+      "precision": 0.5251,
+      "recall": 1.0,
+      "f1": 0.6886,
+      "fpr": 0.7328,
+      "specificity": 0.2672,
+      "mcc": 0.3746,
+      "burden": 0.8524,
+      "total": 210,
+      "threshold": 0.9
+    },
+    "0.92": {
+      "tp": 94,
+      "fp": 95,
+      "tn": 21,
+      "fn": 0,
+      "precision": 0.4974,
+      "recall": 1.0,
+      "f1": 0.6643,
+      "fpr": 0.819,
+      "specificity": 0.181,
+      "mcc": 0.3001,
+      "burden": 0.9,
+      "total": 210,
+      "threshold": 0.92
+    },
+    "0.95": {
+      "tp": 94,
+      "fp": 111,
+      "tn": 5,
+      "fn": 0,
+      "precision": 0.4585,
+      "recall": 1.0,
+      "f1": 0.6288,
+      "fpr": 0.9569,
+      "specificity": 0.0431,
+      "mcc": 0.1406,
+      "burden": 0.9762,
+      "total": 210,
+      "threshold": 0.95
+    },
+    "0.98": {
+      "tp": 94,
+      "fp": 116,
+      "tn": 0,
+      "fn": 0,
+      "precision": 0.4476,
+      "recall": 1.0,
+      "f1": 0.6184,
+      "fpr": 1.0,
+      "specificity": 0.0,
+      "mcc": 0.0,
+      "burden": 1.0,
+      "total": 210,
+      "threshold": 0.98
+    },
+    "0.99": {
+      "tp": 94,
+      "fp": 116,
+      "tn": 0,
+      "fn": 0,
+      "precision": 0.4476,
+      "recall": 1.0,
+      "f1": 0.6184,
+      "fpr": 1.0,
+      "specificity": 0.0,
+      "mcc": 0.0,
+      "burden": 1.0,
+      "total": 210,
+      "threshold": 0.99
+    }
+  },
+  "confidence_stratified": {
+    "0.00-0.30": {
+      "n": 9,
+      "n_wrong": 7,
+      "error_rate": 0.7778,
+      "avg_epistemic": 6.869e-05,
+      "avg_confidence": 0.2712
+    },
+    "0.30-0.50": {
+      "n": 99,
+      "n_wrong": 79,
+      "error_rate": 0.798,
+      "avg_epistemic": 6.801e-05,
+      "avg_confidence": 0.3683
+    },
+    "0.50-0.70": {
+      "n": 24,
+      "n_wrong": 8,
+      "error_rate": 0.3333,
+      "avg_epistemic": 7.193e-05,
+      "avg_confidence": 0.6139
+    },
+    "0.70-0.85": {
+      "n": 25,
+      "n_wrong": 0,
+      "error_rate": 0.0,
+      "avg_epistemic": 7.51e-05,
+      "avg_confidence": 0.8005
+    },
+    "0.85-0.92": {
+      "n": 32,
+      "n_wrong": 0,
+      "error_rate": 0.0,
+      "avg_epistemic": 7.425e-05,
+      "avg_confidence": 0.8864
+    },
+    "0.92-0.95": {
+      "n": 16,
+      "n_wrong": 0,
+      "error_rate": 0.0,
+      "avg_epistemic": 6.733e-05,
+      "avg_confidence": 0.9323
+    },
+    "0.95-1.01": {
+      "n": 5,
+      "n_wrong": 0,
+      "error_rate": 0.0,
+      "avg_epistemic": 6.071e-05,
+      "avg_confidence": 0.9681
+    }
+  },
+  "elapsed_seconds": 3.37
+}

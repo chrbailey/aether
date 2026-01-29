@@ -1,0 +1,439 @@
+{
+  "benchmark": "AETHER BPI2019 Governance Benchmark (v2 bidirectional)",
+  "dataset": {
+    "label": "BPI2019",
+    "data_dir": "/Volumes/OWC drive/Dev/aether/data/events",
+    "total_cases": 500,
+    "evaluated": 499,
+    "skipped": 1,
+    "needs_review": 56,
+    "review_rate": 0.1122,
+    "accuracy": 0.8878,
+    "source": "BPI2019"
+  },
+  "model": {
+    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/models_bpi_backup/best.pt",
+    "calibration": {
+      "ece": 0.2485864246656039,
+      "mce": 0.312972939239358,
+      "brier": 0.14323740696113516
+    },
+    "ensemble_size": 10,
+    "noise_sigma": 0.10636785030364991
+  },
+  "timestamp": "2026-01-28T07:25:38.438104+00:00",
+  "evaluation_protocol": {
+    "ground_truth": "Case needs review if model's next-activity prediction is WRONG",
+    "calibration_target": "Next-activity prediction confidence",
+    "case_filter": "Skip cases with < 2 events",
+    "gate_tested": "reviewGateAutoPass (flag if confidence < threshold)"
+  },
+  "per_mode": {
+    "flexible": {
+      "mode_factor": 1.0,
+      "static": {
+        "tp": 43,
+        "fp": 70,
+        "tn": 373,
+        "fn": 13,
+        "precision": 0.3805,
+        "recall": 0.7679,
+        "f1": 0.5089,
+        "fpr": 0.158,
+        "specificity": 0.842,
+        "mcc": 0.4599,
+        "burden": 0.2265,
+        "total": 499,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 35,
+        "fp": 47,
+        "tn": 396,
+        "fn": 21,
+        "precision": 0.4268,
+        "recall": 0.625,
+        "f1": 0.5072,
+        "fpr": 0.1061,
+        "mcc": 0.442,
+        "burden": 0.1643,
+        "threshold_mean": 0.506916,
+        "threshold_std": 0.00049,
+        "threshold_min": 0.505615,
+        "threshold_max": 0.509842
+      },
+      "naive": {
+        "tp": 54,
+        "fp": 404,
+        "tn": 39,
+        "fn": 2,
+        "precision": 0.1179,
+        "recall": 0.9643,
+        "f1": 0.2101,
+        "fpr": 0.912,
+        "mcc": 0.0601,
+        "burden": 0.9178,
+        "threshold_mean": 0.80148,
+        "threshold_std": 0.0,
+        "threshold_min": 0.80148,
+        "threshold_max": 0.80148
+      },
+      "factor_decomposition": {
+        "mode": 1.0,
+        "unc_epistemic": 0.8538417324802008,
+        "unc_total": 1.35,
+        "calibration": 1.0794345698662415
+      }
+    },
+    "standard": {
+      "mode_factor": 1.1,
+      "static": {
+        "tp": 43,
+        "fp": 70,
+        "tn": 373,
+        "fn": 13,
+        "precision": 0.3805,
+        "recall": 0.7679,
+        "f1": 0.5089,
+        "fpr": 0.158,
+        "specificity": 0.842,
+        "mcc": 0.4599,
+        "burden": 0.2265,
+        "total": 499,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 44,
+        "fp": 73,
+        "tn": 370,
+        "fn": 12,
+        "precision": 0.3761,
+        "recall": 0.7857,
+        "f1": 0.5087,
+        "fpr": 0.1648,
+        "mcc": 0.4626,
+        "burden": 0.2345,
+        "threshold_mean": 0.557608,
+        "threshold_std": 0.000539,
+        "threshold_min": 0.556176,
+        "threshold_max": 0.560826
+      },
+      "naive": {
+        "tp": 55,
+        "fp": 419,
+        "tn": 24,
+        "fn": 1,
+        "precision": 0.116,
+        "recall": 0.9821,
+        "f1": 0.2075,
+        "fpr": 0.9458,
+        "mcc": 0.0525,
+        "burden": 0.9499,
+        "threshold_mean": 0.881628,
+        "threshold_std": 0.0,
+        "threshold_min": 0.881628,
+        "threshold_max": 0.881628
+      },
+      "factor_decomposition": {
+        "mode": 1.1,
+        "unc_epistemic": 0.8538417324802008,
+        "unc_total": 1.35,
+        "calibration": 1.0794345698662415
+      }
+    },
+    "strict": {
+      "mode_factor": 1.2,
+      "static": {
+        "tp": 43,
+        "fp": 70,
+        "tn": 373,
+        "fn": 13,
+        "precision": 0.3805,
+        "recall": 0.7679,
+        "f1": 0.5089,
+        "fpr": 0.158,
+        "specificity": 0.842,
+        "mcc": 0.4599,
+        "burden": 0.2265,
+        "total": 499,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 45,
+        "fp": 114,
+        "tn": 329,
+        "fn": 11,
+        "precision": 0.283,
+        "recall": 0.8036,
+        "f1": 0.4186,
+        "fpr": 0.2573,
+        "mcc": 0.37,
+        "burden": 0.3186,
+        "threshold_mean": 0.6083,
+        "threshold_std": 0.000588,
+        "threshold_min": 0.606738,
+        "threshold_max": 0.61181
+      },
+      "naive": {
+        "tp": 56,
+        "fp": 437,
+        "tn": 6,
+        "fn": 0,
+        "precision": 0.1136,
+        "recall": 1.0,
+        "f1": 0.204,
+        "fpr": 0.9865,
+        "mcc": 0.0392,
+        "burden": 0.988,
+        "threshold_mean": 0.961776,
+        "threshold_std": 0.0,
+        "threshold_min": 0.961776,
+        "threshold_max": 0.961776
+      },
+      "factor_decomposition": {
+        "mode": 1.2,
+        "unc_epistemic": 0.8538417324802008,
+        "unc_total": 1.35,
+        "calibration": 1.0794345698662415
+      }
+    }
+  },
+  "uncertainty_analysis": {
+    "correct": {
+      "n": 443,
+      "epistemic_mean": 8.74e-05,
+      "aleatoric_mean": 0.01123628,
+      "total_mean": 0.01132367,
+      "confidence_mean": 0.6626
+    },
+    "wrong": {
+      "n": 56,
+      "epistemic_mean": 8.404e-05,
+      "aleatoric_mean": 0.0112615,
+      "total_mean": 0.01134554,
+      "confidence_mean": 0.4538
+    },
+    "separation_ratios": {
+      "epistemic": 0.96,
+      "aleatoric": 1.0,
+      "total": 1.0,
+      "epistemic_advantage": 0.96
+    }
+  },
+  "outcome_correlation": {
+    "ontime": {
+      "n": 486,
+      "accuracy": 0.9115,
+      "avg_confidence": 0.6441
+    },
+    "rework": {
+      "n": 84,
+      "accuracy": 0.6667,
+      "avg_confidence": 0.5913
+    }
+  },
+  "threshold_sweep": {
+    "0.5": {
+      "tp": 33,
+      "fp": 45,
+      "tn": 398,
+      "fn": 23,
+      "precision": 0.4231,
+      "recall": 0.5893,
+      "f1": 0.4925,
+      "fpr": 0.1016,
+      "specificity": 0.8984,
+      "mcc": 0.4239,
+      "burden": 0.1563,
+      "total": 499,
+      "threshold": 0.5
+    },
+    "0.6": {
+      "tp": 45,
+      "fp": 109,
+      "tn": 334,
+      "fn": 11,
+      "precision": 0.2922,
+      "recall": 0.8036,
+      "f1": 0.4286,
+      "fpr": 0.246,
+      "specificity": 0.754,
+      "mcc": 0.381,
+      "burden": 0.3086,
+      "total": 499,
+      "threshold": 0.6
+    },
+    "0.7": {
+      "tp": 50,
+      "fp": 263,
+      "tn": 180,
+      "fn": 6,
+      "precision": 0.1597,
+      "recall": 0.8929,
+      "f1": 0.271,
+      "fpr": 0.5937,
+      "specificity": 0.4063,
+      "mcc": 0.1953,
+      "burden": 0.6273,
+      "total": 499,
+      "threshold": 0.7
+    },
+    "0.8": {
+      "tp": 54,
+      "fp": 403,
+      "tn": 40,
+      "fn": 2,
+      "precision": 0.1182,
+      "recall": 0.9643,
+      "f1": 0.2105,
+      "fpr": 0.9097,
+      "specificity": 0.0903,
+      "mcc": 0.062,
+      "burden": 0.9158,
+      "total": 499,
+      "threshold": 0.8
+    },
+    "0.85": {
+      "tp": 55,
+      "fp": 416,
+      "tn": 27,
+      "fn": 1,
+      "precision": 0.1168,
+      "recall": 0.9821,
+      "f1": 0.2087,
+      "fpr": 0.9391,
+      "specificity": 0.0609,
+      "mcc": 0.0591,
+      "burden": 0.9439,
+      "total": 499,
+      "threshold": 0.85
+    },
+    "0.9": {
+      "tp": 55,
+      "fp": 422,
+      "tn": 21,
+      "fn": 1,
+      "precision": 0.1153,
+      "recall": 0.9821,
+      "f1": 0.2064,
+      "fpr": 0.9526,
+      "specificity": 0.0474,
+      "mcc": 0.0454,
+      "burden": 0.9559,
+      "total": 499,
+      "threshold": 0.9
+    },
+    "0.92": {
+      "tp": 56,
+      "fp": 428,
+      "tn": 15,
+      "fn": 0,
+      "precision": 0.1157,
+      "recall": 1.0,
+      "f1": 0.2074,
+      "fpr": 0.9661,
+      "specificity": 0.0339,
+      "mcc": 0.0626,
+      "burden": 0.9699,
+      "total": 499,
+      "threshold": 0.92
+    },
+    "0.95": {
+      "tp": 56,
+      "fp": 437,
+      "tn": 6,
+      "fn": 0,
+      "precision": 0.1136,
+      "recall": 1.0,
+      "f1": 0.204,
+      "fpr": 0.9865,
+      "specificity": 0.0135,
+      "mcc": 0.0392,
+      "burden": 0.988,
+      "total": 499,
+      "threshold": 0.95
+    },
+    "0.98": {
+      "tp": 56,
+      "fp": 437,
+      "tn": 6,
+      "fn": 0,
+      "precision": 0.1136,
+      "recall": 1.0,
+      "f1": 0.204,
+      "fpr": 0.9865,
+      "specificity": 0.0135,
+      "mcc": 0.0392,
+      "burden": 0.988,
+      "total": 499,
+      "threshold": 0.98
+    },
+    "0.99": {
+      "tp": 56,
+      "fp": 437,
+      "tn": 6,
+      "fn": 0,
+      "precision": 0.1136,
+      "recall": 1.0,
+      "f1": 0.204,
+      "fpr": 0.9865,
+      "specificity": 0.0135,
+      "mcc": 0.0392,
+      "burden": 0.988,
+      "total": 499,
+      "threshold": 0.99
+    }
+  },
+  "confidence_stratified": {
+    "0.00-0.30": {
+      "n": 23,
+      "n_wrong": 13,
+      "error_rate": 0.5652,
+      "avg_epistemic": 8.855e-05,
+      "avg_confidence": 0.2403
+    },
+    "0.30-0.50": {
+      "n": 55,
+      "n_wrong": 20,
+      "error_rate": 0.3636,
+      "avg_epistemic": 8.867e-05,
+      "avg_confidence": 0.4192
+    },
+    "0.50-0.70": {
+      "n": 235,
+      "n_wrong": 17,
+      "error_rate": 0.0723,
+      "avg_epistemic": 8.644e-05,
+      "avg_confidence": 0.6226
+    },
+    "0.70-0.85": {
+      "n": 158,
+      "n_wrong": 5,
+      "error_rate": 0.0316,
+      "avg_epistemic": 8.715e-05,
+      "avg_confidence": 0.7472
+    },
+    "0.85-0.92": {
+      "n": 13,
+      "n_wrong": 1,
+      "error_rate": 0.0769,
+      "avg_epistemic": 8.628e-05,
+      "avg_confidence": 0.894
+    },
+    "0.92-0.95": {
+      "n": 9,
+      "n_wrong": 0,
+      "error_rate": 0.0,
+      "avg_epistemic": 8.797e-05,
+      "avg_confidence": 0.9367
+    },
+    "0.95-1.01": {
+      "n": 6,
+      "n_wrong": 0,
+      "error_rate": 0.0,
+      "avg_epistemic": 8.532e-05,
+      "avg_confidence": 0.9924
+    }
+  },
+  "elapsed_seconds": 4.35
+}
