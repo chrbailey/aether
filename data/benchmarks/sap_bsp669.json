@@ -1,0 +1,149 @@
+{
+  "benchmark": "AETHER SAP BSP669 Governance Benchmark (v2 bidirectional)",
+  "dataset": {
+    "label": "SAP BSP669 Enterprise ERP",
+    "data_dir": "/Volumes/OWC drive/Dev/aether/data/external/sap_bsp669",
+    "total_cases": 767,
+    "evaluated": 767,
+    "needs_review": 479,
+    "review_rate": 0.6245,
+    "accuracy": 0.3755,
+    "activity_vocab_size": 80,
+    "resource_vocab_size": 61,
+    "source": "SAP BSP 669 Transaction Data Conversion (NetSuite 2013-2017)",
+    "note": "77 activities - larger vocabulary than standard datasets"
+  },
+  "model": {
+    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/external/sap_bsp669/models/best.pt",
+    "calibration": {},
+    "ensemble_size": 10,
+    "noise_sigma": 0.1
+  },
+  "timestamp": "2026-01-29T06:47:10.121789+00:00",
+  "per_mode": {
+    "flexible": {
+      "mode_factor": 1.0,
+      "static": {
+        "tp": 302,
+        "fp": 107,
+        "tn": 181,
+        "fn": 177,
+        "precision": 0.7384,
+        "recall": 0.6305,
+        "f1": 0.6802,
+        "fpr": 0.3715,
+        "specificity": 0.6285,
+        "mcc": 0.2514,
+        "burden": 0.5332,
+        "total": 767,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 152,
+        "fp": 42,
+        "tn": 246,
+        "fn": 327,
+        "precision": 0.7835,
+        "recall": 0.3173,
+        "f1": 0.4517,
+        "fpr": 0.1458,
+        "specificity": 0.8542,
+        "mcc": 0.191,
+        "burden": 0.2529,
+        "total": 767,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "mcc_improvement": -0.0604,
+      "factor_decomposition": {
+        "mode": 1.0,
+        "unc_epistemic": 0.3686988434177901,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      }
+    },
+    "standard": {
+      "mode_factor": 1.1,
+      "static": {
+        "tp": 302,
+        "fp": 107,
+        "tn": 181,
+        "fn": 177,
+        "precision": 0.7384,
+        "recall": 0.6305,
+        "f1": 0.6802,
+        "fpr": 0.3715,
+        "specificity": 0.6285,
+        "mcc": 0.2514,
+        "burden": 0.5332,
+        "total": 767,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 152,
+        "fp": 42,
+        "tn": 246,
+        "fn": 327,
+        "precision": 0.7835,
+        "recall": 0.3173,
+        "f1": 0.4517,
+        "fpr": 0.1458,
+        "specificity": 0.8542,
+        "mcc": 0.191,
+        "burden": 0.2529,
+        "total": 767,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "mcc_improvement": -0.0604,
+      "factor_decomposition": {
+        "mode": 1.1,
+        "unc_epistemic": 0.3686988434177901,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      }
+    },
+    "strict": {
+      "mode_factor": 1.2,
+      "static": {
+        "tp": 302,
+        "fp": 107,
+        "tn": 181,
+        "fn": 177,
+        "precision": 0.7384,
+        "recall": 0.6305,
+        "f1": 0.6802,
+        "fpr": 0.3715,
+        "specificity": 0.6285,
+        "mcc": 0.2514,
+        "burden": 0.5332,
+        "total": 767,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 152,
+        "fp": 42,
+        "tn": 246,
+        "fn": 327,
+        "precision": 0.7835,
+        "recall": 0.3173,
+        "f1": 0.4517,
+        "fpr": 0.1458,
+        "specificity": 0.8542,
+        "mcc": 0.191,
+        "burden": 0.2529,
+        "total": 767,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "mcc_improvement": -0.0604,
+      "factor_decomposition": {
+        "mode": 1.2,
+        "unc_epistemic": 0.3686988434177901,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      }
+    }
+  },
+  "elapsed_seconds": 12.4
+}

@@ -33,6 +33,7 @@ import {
   BASE_THRESHOLDS,
   COEFFICIENTS,
   CLAMP_BOUNDS,
+  computeVocabAwareMinFloor,
 } from './aether.config.js';
 
 /**
@@ -147,18 +148,29 @@ export function computeModulation(
   };
 }
 
+/** Options for computing effective thresholds */
+export interface ThresholdComputeOptions {
+  /** Vocabulary size for reviewGateAutoPass (number of unique activities).
+   *  When provided, enables v3 vocabulary-aware minimum floor. */
+  vocabSize?: number;
+}
+
 /**
  * Compute effective thresholds for ALL configurable gates.
  *
  * This is the main entry point — takes the current system state
  * and produces adaptive thresholds for every gate across
  * PromptSpeak, EFC, SAP, SmallCap, and Knowledge Hooks.
+ *
+ * v3: Accepts optional vocabSize to compute vocabulary-aware minimum floor
+ * for reviewGateAutoPass, preventing regression on high-vocabulary datasets.
  */
 export function computeEffectiveThresholds(
   mode: GovernanceMode,
   uncertainty: UncertaintyDecomposition,
   calibration: CalibrationMetrics,
   autonomyLevel: AutonomyLevel,
+  options: ThresholdComputeOptions = {},
 ): EffectiveThresholds {
   const modulations: Record<string, GovernanceModulation> = {};
 
@@ -205,9 +217,14 @@ export function computeEffectiveThresholds(
   );
 
   // Higher-is-stricter: tightening multiplies (capped by config bounds)
+  // v3: Use vocabulary-aware minimum floor to prevent regression on high-vocab datasets
+  const reviewGateMinFloor = options.vocabSize
+    ? computeVocabAwareMinFloor(options.vocabSize)
+    : CLAMP_BOUNDS.reviewGateAutoPass.min;
+
   const reviewGateAutoPass = clamp(
     BASE_THRESHOLDS.reviewGateAutoPass * tighteningFactor(modulations['reviewGateAutoPass']),
-    CLAMP_BOUNDS.reviewGateAutoPass.min,
+    reviewGateMinFloor,
     CLAMP_BOUNDS.reviewGateAutoPass.max,
   );
 

@@ -1,0 +1,147 @@
+{
+  "benchmark": "AETHER NetSuite 2025 Governance Benchmark (v2 bidirectional)",
+  "dataset": {
+    "label": "NetSuite 2025",
+    "data_dir": "/Volumes/OWC drive/Dev/aether/data/external/netsuite_2025",
+    "total_cases": 274,
+    "evaluated": 274,
+    "needs_review": 162,
+    "review_rate": 0.5912,
+    "accuracy": 0.4088,
+    "source": "NetSuite Transaction Export (2019-2025)",
+    "source_rows": "4.2M"
+  },
+  "model": {
+    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/external/netsuite_2025/models/best.pt",
+    "calibration": {},
+    "ensemble_size": 10,
+    "noise_sigma": 0.1
+  },
+  "timestamp": "2026-01-29T04:45:22.726734+00:00",
+  "per_mode": {
+    "flexible": {
+      "mode_factor": 1.0,
+      "static": {
+        "tp": 41,
+        "fp": 13,
+        "tn": 99,
+        "fn": 121,
+        "precision": 0.7593,
+        "recall": 0.2531,
+        "f1": 0.3796,
+        "fpr": 0.1161,
+        "specificity": 0.8839,
+        "mcc": 0.1693,
+        "burden": 0.1971,
+        "total": 274,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 19,
+        "fp": 3,
+        "tn": 109,
+        "fn": 143,
+        "precision": 0.8636,
+        "recall": 0.1173,
+        "f1": 0.2065,
+        "fpr": 0.0268,
+        "specificity": 0.9732,
+        "mcc": 0.1637,
+        "burden": 0.0803,
+        "total": 274,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.0,
+        "unc_epistemic": 0.05728582813869071,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      },
+      "mcc_improvement": -0.0056
+    },
+    "standard": {
+      "mode_factor": 1.1,
+      "static": {
+        "tp": 41,
+        "fp": 13,
+        "tn": 99,
+        "fn": 121,
+        "precision": 0.7593,
+        "recall": 0.2531,
+        "f1": 0.3796,
+        "fpr": 0.1161,
+        "specificity": 0.8839,
+        "mcc": 0.1693,
+        "burden": 0.1971,
+        "total": 274,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 19,
+        "fp": 3,
+        "tn": 109,
+        "fn": 143,
+        "precision": 0.8636,
+        "recall": 0.1173,
+        "f1": 0.2065,
+        "fpr": 0.0268,
+        "specificity": 0.9732,
+        "mcc": 0.1637,
+        "burden": 0.0803,
+        "total": 274,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.1,
+        "unc_epistemic": 0.05728582813869071,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      },
+      "mcc_improvement": -0.0056
+    },
+    "strict": {
+      "mode_factor": 1.2,
+      "static": {
+        "tp": 41,
+        "fp": 13,
+        "tn": 99,
+        "fn": 121,
+        "precision": 0.7593,
+        "recall": 0.2531,
+        "f1": 0.3796,
+        "fpr": 0.1161,
+        "specificity": 0.8839,
+        "mcc": 0.1693,
+        "burden": 0.1971,
+        "total": 274,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 19,
+        "fp": 3,
+        "tn": 109,
+        "fn": 143,
+        "precision": 0.8636,
+        "recall": 0.1173,
+        "f1": 0.2065,
+        "fpr": 0.0268,
+        "specificity": 0.9732,
+        "mcc": 0.1637,
+        "burden": 0.0803,
+        "total": 274,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.2,
+        "unc_epistemic": 0.05728582813869071,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      },
+      "mcc_improvement": -0.0056
+    }
+  },
+  "elapsed_seconds": 21.44
+}

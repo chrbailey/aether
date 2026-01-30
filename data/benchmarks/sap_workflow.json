@@ -1,0 +1,146 @@
+{
+  "benchmark": "AETHER SAP Workflow Governance Benchmark (v2 bidirectional)",
+  "dataset": {
+    "label": "SAP Workflow Mining",
+    "data_dir": "/Volumes/OWC drive/Dev/aether/data/external/sap_workflow",
+    "total_cases": 2896,
+    "evaluated": 2896,
+    "needs_review": 134,
+    "review_rate": 0.0463,
+    "accuracy": 0.9537,
+    "source": "SAP Workflow Mining Synthetic Dataset"
+  },
+  "model": {
+    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/external/sap_workflow/models/best.pt",
+    "calibration": {},
+    "ensemble_size": 10,
+    "noise_sigma": 0.1
+  },
+  "timestamp": "2026-01-29T19:26:33.152638+00:00",
+  "per_mode": {
+    "flexible": {
+      "mode_factor": 1.0,
+      "static": {
+        "tp": 46,
+        "fp": 285,
+        "tn": 2477,
+        "fn": 88,
+        "precision": 0.139,
+        "recall": 0.3433,
+        "f1": 0.1978,
+        "fpr": 0.1032,
+        "specificity": 0.8968,
+        "mcc": 0.1585,
+        "burden": 0.1143,
+        "total": 2896,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 46,
+        "fp": 194,
+        "tn": 2568,
+        "fn": 88,
+        "precision": 0.1917,
+        "recall": 0.3433,
+        "f1": 0.246,
+        "fpr": 0.0702,
+        "specificity": 0.9298,
+        "mcc": 0.2081,
+        "burden": 0.0829,
+        "total": 2896,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.0,
+        "unc_epistemic": 0.0,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      },
+      "mcc_improvement": 0.0496
+    },
+    "standard": {
+      "mode_factor": 1.1,
+      "static": {
+        "tp": 46,
+        "fp": 285,
+        "tn": 2477,
+        "fn": 88,
+        "precision": 0.139,
+        "recall": 0.3433,
+        "f1": 0.1978,
+        "fpr": 0.1032,
+        "specificity": 0.8968,
+        "mcc": 0.1585,
+        "burden": 0.1143,
+        "total": 2896,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 46,
+        "fp": 194,
+        "tn": 2568,
+        "fn": 88,
+        "precision": 0.1917,
+        "recall": 0.3433,
+        "f1": 0.246,
+        "fpr": 0.0702,
+        "specificity": 0.9298,
+        "mcc": 0.2081,
+        "burden": 0.0829,
+        "total": 2896,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.1,
+        "unc_epistemic": 0.0,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      },
+      "mcc_improvement": 0.0496
+    },
+    "strict": {
+      "mode_factor": 1.2,
+      "static": {
+        "tp": 46,
+        "fp": 285,
+        "tn": 2477,
+        "fn": 88,
+        "precision": 0.139,
+        "recall": 0.3433,
+        "f1": 0.1978,
+        "fpr": 0.1032,
+        "specificity": 0.8968,
+        "mcc": 0.1585,
+        "burden": 0.1143,
+        "total": 2896,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 46,
+        "fp": 194,
+        "tn": 2568,
+        "fn": 88,
+        "precision": 0.1917,
+        "recall": 0.3433,
+        "f1": 0.246,
+        "fpr": 0.0702,
+        "specificity": 0.9298,
+        "mcc": 0.2081,
+        "burden": 0.0829,
+        "total": 2896,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.2,
+        "unc_epistemic": 0.0,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      },
+      "mcc_improvement": 0.0496
+    }
+  },
+  "elapsed_seconds": 17.7
+}

@@ -1,0 +1,151 @@
+{
+  "benchmark": "AETHER BPI 2018 Agriculture Governance Benchmark (v3 vocab-aware)",
+  "dataset": {
+    "label": "BPI Challenge 2018 - Agriculture Subsidy",
+    "data_dir": "/Volumes/OWC drive/Dev/aether/data/external/bpi2018_agriculture",
+    "total_cases": 2000,
+    "evaluated": 2000,
+    "needs_review": 483,
+    "review_rate": 0.2415,
+    "accuracy": 0.7585,
+    "source": "BPI Challenge 2018 - German Agriculture Subsidy Applications",
+    "vocab_size": 38,
+    "v3_min_floor": 0.5231
+  },
+  "model": {
+    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/external/bpi2018_agriculture/models/best.pt",
+    "calibration": {},
+    "ensemble_size": 10,
+    "noise_sigma": 0.1
+  },
+  "timestamp": "2026-01-30T18:40:17.293978+00:00",
+  "per_mode": {
+    "flexible": {
+      "mode_factor": 1.0,
+      "static": {
+        "tp": 282,
+        "fp": 320,
+        "tn": 1197,
+        "fn": 201,
+        "precision": 0.4684,
+        "recall": 0.5839,
+        "f1": 0.5198,
+        "fpr": 0.2109,
+        "specificity": 0.7891,
+        "mcc": 0.3479,
+        "burden": 0.301,
+        "total": 2000,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 255,
+        "fp": 287,
+        "tn": 1230,
+        "fn": 228,
+        "precision": 0.4705,
+        "recall": 0.528,
+        "f1": 0.4976,
+        "fpr": 0.1892,
+        "specificity": 0.8108,
+        "mcc": 0.3262,
+        "burden": 0.271,
+        "total": 2000,
+        "threshold_mean": 0.52315,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.0,
+        "unc_epistemic": 1.7862822332403994e-11,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755,
+        "min_floor": 0.5231499854639056
+      },
+      "mcc_improvement": -0.0217
+    },
+    "standard": {
+      "mode_factor": 1.1,
+      "static": {
+        "tp": 282,
+        "fp": 320,
+        "tn": 1197,
+        "fn": 201,
+        "precision": 0.4684,
+        "recall": 0.5839,
+        "f1": 0.5198,
+        "fpr": 0.2109,
+        "specificity": 0.7891,
+        "mcc": 0.3479,
+        "burden": 0.301,
+        "total": 2000,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 255,
+        "fp": 287,
+        "tn": 1230,
+        "fn": 228,
+        "precision": 0.4705,
+        "recall": 0.528,
+        "f1": 0.4976,
+        "fpr": 0.1892,
+        "specificity": 0.8108,
+        "mcc": 0.3262,
+        "burden": 0.271,
+        "total": 2000,
+        "threshold_mean": 0.52315,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.1,
+        "unc_epistemic": 1.7862822332403994e-11,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755,
+        "min_floor": 0.5231499854639056
+      },
+      "mcc_improvement": -0.0217
+    },
+    "strict": {
+      "mode_factor": 1.2,
+      "static": {
+        "tp": 282,
+        "fp": 320,
+        "tn": 1197,
+        "fn": 201,
+        "precision": 0.4684,
+        "recall": 0.5839,
+        "f1": 0.5198,
+        "fpr": 0.2109,
+        "specificity": 0.7891,
+        "mcc": 0.3479,
+        "burden": 0.301,
+        "total": 2000,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 255,
+        "fp": 287,
+        "tn": 1230,
+        "fn": 228,
+        "precision": 0.4705,
+        "recall": 0.528,
+        "f1": 0.4976,
+        "fpr": 0.1892,
+        "specificity": 0.8108,
+        "mcc": 0.3262,
+        "burden": 0.271,
+        "total": 2000,
+        "threshold_mean": 0.52315,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.2,
+        "unc_epistemic": 1.7862822332403994e-11,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755,
+        "min_floor": 0.5231499854639056
+      },
+      "mcc_improvement": -0.0217
+    }
+  },
+  "elapsed_seconds": 29.92
+}

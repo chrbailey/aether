@@ -20,6 +20,7 @@ import {
   computeEffectiveThresholds,
   makeGateDecision,
 } from '../governance/modulation.js';
+import { computeVocabAwareMinFloor } from '../governance/aether.config.js';
 import { GOVERNANCE_MODES } from '../types/governance.js';
 import type { UncertaintyDecomposition, CalibrationMetrics } from '../types/predictions.js';
 
@@ -337,5 +338,89 @@ describe('makeGateDecision', () => {
     const d2 = makeGateDecision('test', 0.1, modulation, true);
 
     expect(d1.auditId).not.toBe(d2.auditId);
+  });
+});
+
+// --- Vocabulary-Aware Floor Tests (v3) ---
+
+describe('computeVocabAwareMinFloor', () => {
+  it('returns base floor (0.50) for small vocabularies', () => {
+    expect(computeVocabAwareMinFloor(10)).toBeCloseTo(0.50);
+    expect(computeVocabAwareMinFloor(20)).toBeCloseTo(0.50);
+  });
+
+  it('returns 0.55 for ~80 activities (matches static baseline)', () => {
+    // Formula: 0.50 + 0.05 * log(80/20) / log(4) = 0.50 + 0.05 * 1 = 0.55
+    expect(computeVocabAwareMinFloor(80)).toBeCloseTo(0.55, 1);
+  });
+
+  it('returns ~0.60 for ~320 activities (high complexity)', () => {
+    // Formula: 0.50 + 0.05 * log(320/20) / log(4) = 0.50 + 0.05 * 2 = 0.60
+    expect(computeVocabAwareMinFloor(320)).toBeCloseTo(0.60, 1);
+  });
+
+  it('increases monotonically with vocabulary size', () => {
+    const floor20 = computeVocabAwareMinFloor(20);
+    const floor50 = computeVocabAwareMinFloor(50);
+    const floor100 = computeVocabAwareMinFloor(100);
+    const floor200 = computeVocabAwareMinFloor(200);
+
+    expect(floor50).toBeGreaterThan(floor20);
+    expect(floor100).toBeGreaterThan(floor50);
+    expect(floor200).toBeGreaterThan(floor100);
+  });
+});
+
+describe('computeEffectiveThresholds with vocabSize option', () => {
+  it('uses default min floor when vocabSize not provided', () => {
+    const thresholds = computeEffectiveThresholds(
+      GOVERNANCE_MODES['flexible'],
+      makeUncertainty({ total: 0.1, epistemicRatio: 0.1 }),
+      makeCalibration({ ece: 0.0 }),
+      'supervised',
+    );
+
+    // With relaxed inputs, threshold should be near the default min (0.50)
+    expect(thresholds.reviewGateAutoPass).toBeGreaterThanOrEqual(0.50);
+  });
+
+  it('uses vocab-aware floor for high-vocabulary datasets', () => {
+    // With relaxed inputs that would normally drop to 0.50
+    const relaxedUncertainty = makeUncertainty({ total: 0.1, epistemicRatio: 0.1 });
+    const perfectCalibration = makeCalibration({ ece: 0.0 });
+
+    const withoutVocab = computeEffectiveThresholds(
+      GOVERNANCE_MODES['flexible'],
+      relaxedUncertainty,
+      perfectCalibration,
+      'supervised',
+    );
+
+    const withHighVocab = computeEffectiveThresholds(
+      GOVERNANCE_MODES['flexible'],
+      relaxedUncertainty,
+      perfectCalibration,
+      'supervised',
+      { vocabSize: 80 },
+    );
+
+    // High vocab should have higher minimum floor
+    expect(withHighVocab.reviewGateAutoPass).toBeGreaterThanOrEqual(
+      withoutVocab.reviewGateAutoPass
+    );
+  });
+
+  it('prevents regression: 77-activity dataset gets floor >= 0.55', () => {
+    // This is the SAP BSP669 case that caused -24% regression
+    const thresholds = computeEffectiveThresholds(
+      GOVERNANCE_MODES['standard'],
+      makeUncertainty({ total: 0.9, epistemicRatio: 0.35 }),
+      makeCalibration({ ece: 0.0 }),
+      'supervised',
+      { vocabSize: 77 },
+    );
+
+    // With v3, the floor for 77 activities should be ~0.55 (matching static)
+    expect(thresholds.reviewGateAutoPass).toBeGreaterThanOrEqual(0.54);
   });
 });

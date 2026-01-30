@@ -1,0 +1,150 @@
+{
+  "benchmark": "AETHER Judicial Case Events Governance Benchmark (v2 bidirectional)",
+  "novelty": "FIRST legal process mining domain with uncertainty quantification",
+  "dataset": {
+    "label": "Judicial Case Events",
+    "data_dir": "/Volumes/OWC drive/Dev/aether/data/external/judicial",
+    "total_cases": 5,
+    "evaluated": 5,
+    "needs_review": 3,
+    "review_rate": 0.6,
+    "accuracy": 0.4,
+    "source": "Judicial Intelligence - Judge Alsup N.D. Cal (2010-2025)",
+    "doctrines": [
+      "employment",
+      "product_liability",
+      "copyright",
+      "patent"
+    ]
+  },
+  "model": {
+    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/external/judicial/models/best.pt",
+    "calibration": {},
+    "ensemble_size": 10,
+    "noise_sigma": 0.1
+  },
+  "timestamp": "2026-01-29T04:41:51.379737+00:00",
+  "per_mode": {
+    "flexible": {
+      "mode_factor": 1.0,
+      "static": {
+        "tp": 3,
+        "fp": 2,
+        "tn": 0,
+        "fn": 0,
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75,
+        "fpr": 1.0,
+        "specificity": 0.0,
+        "mcc": 0,
+        "burden": 1.0,
+        "total": 5,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 3,
+        "fp": 2,
+        "tn": 0,
+        "fn": 0,
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75,
+        "fpr": 1.0,
+        "specificity": 0.0,
+        "mcc": 0,
+        "burden": 1.0,
+        "total": 5,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.0,
+        "unc_epistemic": 0.8357501279732361,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      }
+    },
+    "standard": {
+      "mode_factor": 1.1,
+      "static": {
+        "tp": 3,
+        "fp": 2,
+        "tn": 0,
+        "fn": 0,
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75,
+        "fpr": 1.0,
+        "specificity": 0.0,
+        "mcc": 0,
+        "burden": 1.0,
+        "total": 5,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 3,
+        "fp": 2,
+        "tn": 0,
+        "fn": 0,
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75,
+        "fpr": 1.0,
+        "specificity": 0.0,
+        "mcc": 0,
+        "burden": 1.0,
+        "total": 5,
+        "threshold_mean": 0.506626,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.1,
+        "unc_epistemic": 0.8357501279732361,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      }
+    },
+    "strict": {
+      "mode_factor": 1.2,
+      "static": {
+        "tp": 3,
+        "fp": 2,
+        "tn": 0,
+        "fn": 0,
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75,
+        "fpr": 1.0,
+        "specificity": 0.0,
+        "mcc": 0,
+        "burden": 1.0,
+        "total": 5,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 3,
+        "fp": 2,
+        "tn": 0,
+        "fn": 0,
+        "precision": 0.6,
+        "recall": 1.0,
+        "f1": 0.75,
+        "fpr": 1.0,
+        "specificity": 0.0,
+        "mcc": 0,
+        "burden": 1.0,
+        "total": 5,
+        "threshold_mean": 0.552683,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.2,
+        "unc_epistemic": 0.8357501279732361,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      }
+    }
+  },
+  "elapsed_seconds": 4.34
+}
