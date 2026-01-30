@@ -143,35 +143,9 @@ jobs:
         with:
           fail-on-severity: high
 
-  # ============================================================================
-  # CodeQL Analysis
-  # ============================================================================
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [javascript-typescript, python]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          queries: +security-extended,security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
+  # Note: CodeQL analysis is handled by GitHub's Default Setup
+  # (Settings -> Security -> Code scanning -> Configure)
+  # Custom CodeQL workflow was removed to avoid conflict with default setup.
 
   # ============================================================================
   # Integration Tests
@@ -251,15 +225,14 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [typescript, python, security-scan, codeql, integration, build-check]
+    needs: [typescript, python, security-scan, integration, build-check]
     if: always()
     steps:
       - name: Check all jobs passed
         run: |
           if [[ "${{ needs.typescript.result }}" != "success" ]] || \
              [[ "${{ needs.python.result }}" != "success" ]] || \
-             [[ "${{ needs.security-scan.result }}" != "success" ]] || \
-             [[ "${{ needs.codeql.result }}" != "success" ]]; then
+             [[ "${{ needs.security-scan.result }}" != "success" ]]; then
             echo "One or more required jobs failed"
             exit 1
           fi
