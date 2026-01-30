@@ -167,7 +167,7 @@ def extract_activity(raw_event: Dict) -> Optional[str]:
     # Check 5W1H format
     what = raw_event.get("what", {})
     event_type = what.get("event_type", "")
-    action = what.get("action", "")
+    _action = what.get("action", "")  # noqa: F841
 
     # Standardize activities for legal process
     if posture == "rule_12b6" or "12b6" in motion_type:
@@ -552,15 +552,15 @@ def main():
     print(f"Unique Activities: {stats['activity_vocab_size']}")
     print(f"Unique Resources: {stats['resource_vocab_size']}")
 
-    print(f"\nActivity distribution:")
+    print("\nActivity distribution:")
     for act, count in list(stats["activity_counts"].items())[:10]:
         print(f"  {act}: {count}")
 
-    print(f"\nDoctrine distribution:")
+    print("\nDoctrine distribution:")
     for doctrine, count in list(stats["doctrine_counts"].items())[:8]:
         print(f"  {doctrine}: {count}")
 
-    print(f"\nOutcome distribution:")
+    print("\nOutcome distribution:")
     print(f"  Settlement: {stats['outcome_stats']['settlement_rate']:.1%}")
     print(f"  Plaintiff favorable: {stats['outcome_stats']['plaintiff_favorable_rate']:.1%}")
     print(f"  Defendant favorable: {stats['outcome_stats']['defendant_favorable_rate']:.1%}")

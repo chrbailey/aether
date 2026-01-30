@@ -55,9 +55,6 @@ class Time2Vec(nn.Module):
             Time embeddings of shape (..., embed_dim). A scalar input
             produces shape (1, embed_dim).
         """
-        # Record original shape to preserve batch dimensions
-        original_shape = time_deltas.shape
-
         # Scalars become (1,)
         if time_deltas.dim() == 0:
             time_deltas = time_deltas.unsqueeze(0)

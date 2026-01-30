@@ -9,7 +9,6 @@ import json
 import time
 from pathlib import Path
 from datetime import datetime, timezone
-from collections import defaultdict
 
 import torch
 import numpy as np
@@ -231,14 +230,14 @@ def main():
     print(f"Cases needing review: {wrong_count} ({wrong_count/(correct_count+wrong_count):.1%})")
 
     # Compute uncertainty stats
-    correct_results = [r for r in results if r["is_correct"]]
-    wrong_results = [r for r in results if not r["is_correct"]]
+    _correct_results = [r for r in results if r["is_correct"]]  # noqa: F841
+    _wrong_results = [r for r in results if not r["is_correct"]]  # noqa: F841
 
     epistemic_mean = np.mean([r["epistemic"] for r in results])
     total_mean = np.mean([r["total_unc"] for r in results])
     ece = model_calib.get("ece", 0.02)
 
-    print(f"\nUncertainty stats:")
+    print("\nUncertainty stats:")
     print(f"  Epistemic mean: {epistemic_mean:.6f}")
     print(f"  Total mean: {total_mean:.6f}")
     print(f"  Model ECE: {ece:.4f}")

@@ -460,10 +460,10 @@ def main():
     print(f"Events: {stats['total_events']:,}")
     print(f"Activities: {stats['activity_vocab_size']}")
     print(f"Resources: {stats['resource_vocab_size']}")
-    print(f"\nActivity distribution:")
+    print("\nActivity distribution:")
     for act, count in list(stats["activity_counts"].items())[:12]:
         print(f"  {act}: {count:,}")
-    print(f"\nOutcomes:")
+    print("\nOutcomes:")
     print(f"  Credit rate: {stats['outcome_stats']['credit_rate']:.1%}")
     print(f"  Journal adjustment rate: {stats['outcome_stats']['journal_rate']:.1%}")
     print(f"  Avg payment ratio: {stats['outcome_stats']['avg_payment_ratio']:.2f}")

@@ -56,3 +56,14 @@ Documentation = "https://github.com/christopherbailey/aether/blob/main/docs/ARCH
 
 [tool.setuptools.packages.find]
 include = ["core*"]
+
+[tool.ruff]
+exclude = [".venv", "__pycache__", ".git"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]  # Line too long handled by formatter
+
+[tool.ruff.lint.per-file-ignores]
+# Scripts need to modify sys.path before importing
+"scripts/*.py" = ["E402"]

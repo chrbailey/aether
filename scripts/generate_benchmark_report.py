@@ -242,7 +242,7 @@ def generate_key_findings(results: dict[str, dict]) -> str:
         d: sum(imps) / len(imps) for d, imps in domain_improvements.items()
     }
     best_domain = max(domain_avg.items(), key=lambda x: x[1])
-    worst_domain = min(domain_avg.items(), key=lambda x: x[1])
+    _worst_domain = min(domain_avg.items(), key=lambda x: x[1])  # noqa: F841
 
     findings.append(
         f"1. **Best Domain for Adaptive Thresholds:** {best_domain[0]} "

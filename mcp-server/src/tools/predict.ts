@@ -89,7 +89,7 @@ function createFallbackPrediction(
     caseId,
     latentState: {
       caseId,
-      embedding: new Array(128).fill(0),
+      embedding: Array.from({ length: 128 }, () => 0),
       pathVariant: 'unknown',
       pathConfidence: 0,
       asOfTimestamp: lastEvent?.timestamp ?? new Date().toISOString(),

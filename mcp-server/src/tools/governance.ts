@@ -87,9 +87,8 @@ export async function evaluateGate(
   const mode = GOVERNANCE_MODES[input.mode];
 
   // Check immutable constraints first
-  let uncertainty: UncertaintyDecomposition;
   const healthy = await pythonBridge.healthCheck();
-  uncertainty = healthy
+  const uncertainty: UncertaintyDecomposition = healthy
     ? await pythonBridge.getDecomposition('current')
     : pythonBridge.fallbackUncertainty();
 

@@ -383,11 +383,11 @@ def main():
     print(f"Activities: {stats['activity_vocab_size']}")
     print(f"Resources: {stats['resource_vocab_size']}")
 
-    print(f"\nActivity distribution:")
+    print("\nActivity distribution:")
     for act, count in list(stats["activity_counts"].items())[:15]:
         print(f"  {act}: {count:,}")
 
-    print(f"\nOutcomes:")
+    print("\nOutcomes:")
     print(f"  Paid: {stats['outcome_stats']['paid_rate']:.1%}")
     print(f"  Appealed: {stats['outcome_stats']['appealed_rate']:.1%}")
     print(f"  Penalty: {stats['outcome_stats']['penalty_rate']:.1%}")

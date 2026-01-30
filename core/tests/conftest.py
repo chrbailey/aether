@@ -6,8 +6,6 @@ so that individual test files don't duplicate setup code.
 
 from __future__ import annotations
 
-import json
-import tempfile
 from pathlib import Path
 from typing import Any
 

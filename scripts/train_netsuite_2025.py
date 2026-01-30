@@ -161,7 +161,7 @@ def main():
     # Print last epoch losses
     if history:
         last = history[-1]
-        logger.info(f"Final epoch losses: " + ", ".join(f"{k}={v:.4f}" for k, v in last.items()))
+        logger.info("Final epoch losses: " + ", ".join(f"{k}={v:.4f}" for k, v in last.items()))
 
 
 if __name__ == "__main__":

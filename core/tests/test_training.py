@@ -12,12 +12,11 @@ Verifies:
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
 
 import pytest
 import torch
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 
 from core.encoder.event_encoder import EventEncoder
 from core.encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
@@ -168,7 +167,7 @@ class TestAetherTrainer:
         self, mock_activity_vocab, mock_resource_vocab, tmp_output_dir
     ):
         """When train_epoch encounters NaN losses, they are filtered from averages."""
-        trainer = _build_trainer(mock_activity_vocab, mock_resource_vocab, tmp_output_dir)
+        _trainer = _build_trainer(mock_activity_vocab, mock_resource_vocab, tmp_output_dir)  # noqa: F841
 
         # Verify the NaN-filtering logic in train_epoch by checking that
         # the epoch-level loss accumulation skips NaN/Inf values.

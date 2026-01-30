@@ -52,11 +52,11 @@ export async function getCalibration(
 /**
  * Get current autonomy level and trust state summary.
  */
-export async function getAutonomyLevel(): Promise<{
+export function getAutonomyLevel(): {
   level: string;
   summary: string;
   state: TrustState | null;
-}> {
+} {
   const state = getTrustState();
 
   if (!state) {

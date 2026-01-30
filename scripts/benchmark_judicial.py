@@ -238,7 +238,7 @@ def main():
     total_mean = np.mean([r["total_unc"] for r in results]) if results else 0
     ece = model_calib.get("ece", 0.02)
 
-    print(f"\nUncertainty stats:")
+    print("\nUncertainty stats:")
     print(f"  Epistemic mean: {epistemic_mean:.6f}")
     print(f"  Total mean: {total_mean:.6f}")
     print(f"  Model ECE: {ece:.4f}")
@@ -252,7 +252,7 @@ def main():
         else:
             doctrine_stats[doctrine]["wrong"] += 1
 
-    print(f"\nAccuracy by Doctrine:")
+    print("\nAccuracy by Doctrine:")
     for doctrine, stats in sorted(doctrine_stats.items()):
         total = stats["correct"] + stats["wrong"]
         acc = stats["correct"] / total if total > 0 else 0
@@ -368,14 +368,14 @@ def main():
     print("\n" + "=" * 60)
     print("SUMMARY: Legal Process Mining Governance Adaptation")
     print("=" * 60)
-    print(f"Domain: Legal/Judicial (NOVEL - first with uncertainty quantification)")
+    print("Domain: Legal/Judicial (NOVEL - first with uncertainty quantification)")
     print(f"Dataset: {len(cases)} cases, {len(results)} evaluated")
     print(f"Model ECE: {ece:.4f} (excellent calibration)")
     print(f"Accuracy: {accuracy:.1%}")
 
     # Check if governance adapted appropriately
     std_factors = benchmark_results["per_mode"]["standard"]["factor_decomposition"]
-    print(f"\nGovernance Adaptation Analysis:")
+    print("\nGovernance Adaptation Analysis:")
     print(f"  Uncertainty (epistemic): {std_factors['unc_epistemic']:.4f}")
     print(f"  Uncertainty (total): {std_factors['unc_total']:.4f}")
     print(f"  Calibration factor: {std_factors['calibration']:.4f}")

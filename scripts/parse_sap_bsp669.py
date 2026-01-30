@@ -765,7 +765,7 @@ def main():
 
     with open(OUTPUT_DIR / "metadata.json", "w") as f:
         json.dump(stats, f, indent=2)
-    print(f"Saved metadata to metadata.json")
+    print("Saved metadata to metadata.json")
 
     # Print summary
     print()
@@ -780,11 +780,11 @@ def main():
     print(f"Unique Activities: {stats['activity_vocab_size']}")
     print(f"Unique Resources: {stats['resource_vocab_size']}")
 
-    print(f"\nActivity Distribution (top 15):")
+    print("\nActivity Distribution (top 15):")
     for act, count in list(stats["activity_counts"].items())[:15]:
         print(f"  {act}: {count:,}")
 
-    print(f"\nO2C Outcomes:")
+    print("\nO2C Outcomes:")
     print(f"  Clean (no issues): {stats['o2c_outcome_stats']['clean_rate']:.1%}")
     print(f"  Has RMA: {stats['o2c_outcome_stats']['rma_rate']:.1%}")
     print(f"  Has Credit: {stats['o2c_outcome_stats']['credit_rate']:.1%}")

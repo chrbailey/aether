@@ -12,7 +12,6 @@ Verifies:
 from __future__ import annotations
 
 import torch
-import pytest
 
 from core.critic.calibration import (
     compute_ece,

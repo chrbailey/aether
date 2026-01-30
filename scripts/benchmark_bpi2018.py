@@ -276,7 +276,7 @@ def main():
     vocab_size = activity_vocab.size
     min_floor = compute_vocab_aware_min_floor(vocab_size)
 
-    print(f"\nUncertainty stats:")
+    print("\nUncertainty stats:")
     print(f"  Epistemic mean: {epistemic_mean:.6f}")
     print(f"  Total mean: {total_mean:.6f}")
     print(f"  Model ECE: {ece:.4f}")

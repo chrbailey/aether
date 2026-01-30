@@ -14,9 +14,6 @@ from __future__ import annotations
 
 import csv
 import json
-import os
-import sqlite3
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -1374,7 +1371,7 @@ class TestEndToEndRealData:
 
     def test_source_distribution_matches_counts(self, metadata):
         source_dist = metadata.get("source_distribution", {})
-        source_counts = metadata.get("source_counts", {})
+        _source_counts = metadata.get("source_counts", {})  # noqa: F841
         # source_distribution is from actual cases, source_counts from loader
         total_dist = sum(source_dist.values())
         assert total_dist == metadata["total_cases"]

@@ -17,8 +17,6 @@ from core.encoder.time2vec import Time2Vec
 from core.encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
 from core.encoder.event_encoder import (
     StructuralEncoder,
-    TemporalEncoder,
-    ContextEncoder,
     EventEncoder,
 )
 

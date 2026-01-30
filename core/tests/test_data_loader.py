@@ -12,22 +12,19 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import tempfile
 from pathlib import Path
 from typing import Any
 
 import pytest
 import torch
 
-from core.encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
 from core.training.data_loader import EventSequenceDataset, collate_fn
 
 # Import shared helpers from conftest (pytest discovers it automatically,
 # but we also need direct access to the builder functions)
 import sys
-from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
-from conftest import make_case, make_event, ACTIVITIES, RESOURCES
+from conftest import make_case
 
 
 # ---------------------------------------------------------------------------

@@ -10,11 +10,9 @@ The encoder is JEPA-adapted: we predict in latent space, not in raw event space.
 
 from __future__ import annotations
 
-import math
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from .time2vec import Time2Vec
 from .vocabulary import ActivityVocabulary, ResourceVocabulary

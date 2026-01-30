@@ -88,8 +88,8 @@ server.tool(
   'get_autonomy_level',
   'Get the current autonomy/trust level (SUPERVISED → GUIDED → COLLABORATIVE → AUTONOMOUS) and how close the system is to the next level.',
   getAutonomyLevelSchema.shape,
-  async () => {
-    const result = await getAutonomyLevel();
+  () => {
+    const result = getAutonomyLevel();
     return {
       content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
     };

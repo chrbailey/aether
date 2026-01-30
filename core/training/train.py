@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
 
 import torch
 import torch.nn as nn
@@ -18,7 +17,7 @@ from torch.utils.data import DataLoader
 
 from ..critic.calibration import CalibrationTracker
 from ..encoder.event_encoder import EventEncoder
-from ..encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
+from ..encoder.vocabulary import ActivityVocabulary
 from ..world_model.energy import EnergyScorer
 from ..world_model.hierarchical import HierarchicalPredictor
 from ..world_model.latent import LatentVariable
@@ -408,7 +407,7 @@ class AetherTrainer:
         val_metrics["calibration_brier"] = compute_brier(all_preds, all_actuals)
 
         logger.info(
-            f"Validation: "
+            "Validation: "
             + ", ".join(f"{k}={v:.4f}" for k, v in val_metrics.items())
         )
 

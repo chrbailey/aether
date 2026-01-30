@@ -24,8 +24,6 @@ import torch.nn.functional as F
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger(__name__)
-
 from ..critic.adaptive_conformal import AdaptiveConformalPredictor
 from ..critic.calibration import CalibrationTracker
 from ..critic.decomposition import decompose_from_ensemble
@@ -35,6 +33,8 @@ from ..world_model.energy import EnergyScorer
 from ..world_model.hierarchical import DEFAULT_PHASES, HierarchicalPredictor
 from ..world_model.latent import INDEX_TO_VARIANT, LatentVariable
 from ..world_model.transition import TransitionModel
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Request / Response models (matching TypeScript types)
@@ -391,7 +391,7 @@ async def predict(request: PredictRequest) -> PredictResponse:
         variant_out = state.latent_var(z_last)
         variant_probs = variant_out["probs"].squeeze(0)
         best_variant_idx = variant_probs.argmax().item()
-        best_variant_name = INDEX_TO_VARIANT.get(best_variant_idx, "unknown")
+        _best_variant_name = INDEX_TO_VARIANT.get(best_variant_idx, "unknown")  # noqa: F841
 
         # Transition prediction for energy score
         action_one_hot = F.one_hot(

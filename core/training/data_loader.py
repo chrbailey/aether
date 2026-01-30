@@ -92,7 +92,7 @@ class EventSequenceDataset(Dataset):
             return data["cases"]
         else:
             raise ValueError(
-                f"JSON must be a list of cases or dict with 'cases' key"
+                "JSON must be a list of cases or dict with 'cases' key"
             )
 
     def _load_from_sqlite(self) -> list[dict[str, Any]]:
@@ -213,7 +213,7 @@ class EventSequenceDataset(Dataset):
         # Outcome targets (default to False/0.0 for missing — never 0.5,
         # which is not a valid binary label and causes BCE to learn nothing)
         outcome = case.get("outcome", {})
-        has_outcome = "onTime" in outcome
+        _has_outcome = "onTime" in outcome  # noqa: F841
         target_ontime = torch.tensor(
             float(outcome.get("onTime", False)), dtype=torch.float
         )

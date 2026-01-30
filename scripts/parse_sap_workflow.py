@@ -13,7 +13,7 @@ import random
 from datetime import datetime
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional, Dict, List, Tuple, Any
+from typing import Optional, Dict, List, Tuple
 
 # Data paths
 SAP_DATA_ROOT = Path("/Volumes/OWC drive/Dev/SAP-workflow-mining/synthetic-data/sample_output")
@@ -580,25 +580,25 @@ def main():
     print(f"Activities: {stats['activity_vocab_size']}")
     print(f"Resources: {stats['resource_vocab_size']}")
 
-    print(f"\nProcess Types:")
+    print("\nProcess Types:")
     for ptype, count in stats["process_types"].items():
         print(f"  {ptype}: {count:,}")
 
-    print(f"\nSD (Order-to-Cash) Stats:")
+    print("\nSD (Order-to-Cash) Stats:")
     print(f"  Cases: {stats['sd_stats']['cases']:,}")
     print(f"  With delivery: {stats['sd_stats']['with_delivery']:,}")
     print(f"  With invoice: {stats['sd_stats']['with_invoice']:,}")
 
-    print(f"\nMM (Procure-to-Pay) Stats:")
+    print("\nMM (Procure-to-Pay) Stats:")
     print(f"  Cases: {stats['mm_stats']['cases']:,}")
     print(f"  With goods receipt: {stats['mm_stats']['with_goods_receipt']:,}")
     print(f"  With invoice receipt: {stats['mm_stats']['with_invoice_receipt']:,}")
 
-    print(f"\nActivity distribution:")
+    print("\nActivity distribution:")
     for act, count in list(stats["activity_counts"].items())[:10]:
         print(f"  {act}: {count:,}")
 
-    print(f"\nOutcomes:")
+    print("\nOutcomes:")
     print(f"  On-time: {stats['outcome_stats']['ontime_rate']:.1%}")
     print(f"  Complete: {stats['outcome_stats']['complete_rate']:.1%}")
 

@@ -17,9 +17,6 @@ from core.world_model.latent import LatentVariable, NUM_VARIANTS
 from core.world_model.transition import TransitionModel, NUM_ACTIONS
 from core.world_model.energy import EnergyScorer
 from core.world_model.hierarchical import (
-    ActivityHead,
-    PhaseHead,
-    OutcomeHead,
     HierarchicalPredictor,
 )
 

@@ -27,8 +27,7 @@ import type {
 import type { UncertaintyDecomposition } from '../types/predictions.js';
 import type { CalibrationMetrics } from '../types/predictions.js';
 import type { AutonomyLevel } from '../types/autonomy.js';
-import { GOVERNANCE_MODES, IMMUTABLE_CONSTRAINTS } from '../types/governance.js';
-import { AUTONOMY_RANK } from '../types/autonomy.js';
+import { IMMUTABLE_CONSTRAINTS } from '../types/governance.js';
 import {
   BASE_THRESHOLDS,
   COEFFICIENTS,

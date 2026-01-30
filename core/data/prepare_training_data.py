@@ -15,13 +15,11 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import sys
 import time
-from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from .unified_pipeline import AetherDataPipeline, DEFAULT_PATHS
 
@@ -80,7 +78,7 @@ def _print_event_stats(metadata: Dict[str, Any]) -> None:
     print(f"  Train events:    {_format_count(metadata.get('train_events', 0))}")
     print(f"  Val events:      {_format_count(metadata.get('val_events', 0))}")
     print()
-    print(f"  Events per case:")
+    print("  Events per case:")
     print(f"    Min:     {stats.get('min', 0)}")
     print(f"    P25:     {stats.get('p25', 0)}")
     print(f"    Median:  {stats.get('median', 0)}")

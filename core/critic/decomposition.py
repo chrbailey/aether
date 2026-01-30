@@ -65,7 +65,9 @@ def decompose_from_ensemble(
     stacked = torch.stack([p.detach().float() for p in predictions])
 
     # Mean prediction across ensemble: (..., n_classes)
-    ensemble_mean = stacked.mean(dim=0)
+    # Note: We compute ensemble_mean for conceptual clarity in the variance formula,
+    # but the actual epistemic calculation uses stacked.var() which internally computes the mean
+    _ensemble_mean = stacked.mean(dim=0)  # noqa: F841
 
     # Epistemic: variance of the means across ensemble members
     # For each class, compute variance of predicted probability across models

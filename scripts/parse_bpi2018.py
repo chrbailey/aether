@@ -23,7 +23,7 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 logging.basicConfig(
     level=logging.INFO,
@@ -404,11 +404,11 @@ def main():
     print(f"Activities: {stats['activity_vocab_size']}")
     print(f"Resources: {stats['resource_vocab_size']}")
 
-    print(f"\nActivity distribution (top 15):")
+    print("\nActivity distribution (top 15):")
     for act, count in list(stats["activity_counts"].items())[:15]:
         print(f"  {act}: {count:,}")
 
-    print(f"\nOutcomes:")
+    print("\nOutcomes:")
     print(f"  Paid: {stats['outcome_stats']['paid_rate']:.1%}")
     print(f"  Rejected: {stats['outcome_stats']['rejected_rate']:.1%}")
     print(f"  Complete: {stats['outcome_stats']['complete_rate']:.1%}")

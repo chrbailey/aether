@@ -243,11 +243,11 @@ def main():
     total_mean = np.mean([r["total_unc"] for r in results])
     ece = model_calib.get("ece", 0.02)
 
-    print(f"\nUncertainty stats:")
+    print("\nUncertainty stats:")
     print(f"  Epistemic mean: {epistemic_mean:.6f}")
     print(f"  Total mean: {total_mean:.6f}")
     print(f"  Model ECE: {ece:.4f}")
-    print(f"\nLarger vocabulary impact: 77 activities vs typical 15-30")
+    print("\nLarger vocabulary impact: 77 activities vs typical 15-30")
 
     # Benchmark each mode
     benchmark_results = {

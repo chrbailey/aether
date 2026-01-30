@@ -28,7 +28,6 @@ import type { CalibrationMetrics } from '../types/predictions.js';
 import {
   AUTONOMY_RANK,
   ASCENT_REQUIREMENTS,
-  DESCENT_TRIGGERS,
 } from '../types/autonomy.js';
 
 /** The ordered list of autonomy levels for traversal */

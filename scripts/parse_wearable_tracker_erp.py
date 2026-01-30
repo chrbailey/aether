@@ -14,7 +14,7 @@ import random
 from datetime import datetime
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict
 
 # Data paths
 WEARABLE_TRACKER_ROOT = Path("/Volumes/OWC drive/_Archive/Fitbit - working files/Product Earth")
@@ -383,10 +383,10 @@ def main():
     print(f"Events: {stats['total_events']:,}")
     print(f"Activities: {stats['activity_vocab_size']}")
     print(f"Resources: {stats['resource_vocab_size']}")
-    print(f"\nActivity distribution:")
+    print("\nActivity distribution:")
     for act, count in list(stats["activity_counts"].items())[:10]:
         print(f"  {act}: {count:,}")
-    print(f"\nOutcomes:")
+    print("\nOutcomes:")
     print(f"  On-time (no RMA/correction): {stats['outcome_stats']['ontime_rate']:.1%}")
     print(f"  Rework (corrections): {stats['outcome_stats']['rework_rate']:.1%}")
     print(f"  Has RMA: {stats['outcome_stats']['rma_rate']:.1%}")

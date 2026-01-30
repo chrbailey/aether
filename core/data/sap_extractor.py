@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -921,7 +921,7 @@ def _print_summary(cases: list[dict]) -> None:
     p2p_cases = [c for c in cases if c["caseId"].startswith("P2P_")]
 
     print(f"\n{'='*60}")
-    print(f"SAP IDES Event Log Extraction Summary")
+    print("SAP IDES Event Log Extraction Summary")
     print(f"{'='*60}")
     print(f"Total cases:    {len(cases)}")
     print(f"  O2C cases:    {len(o2c_cases)}")
@@ -935,7 +935,7 @@ def _print_summary(cases: list[dict]) -> None:
         o2c_avg = o2c_events / len(o2c_cases)
         o2c_rework = sum(1 for c in o2c_cases if c["outcome"]["rework"])
         o2c_ontime = sum(1 for c in o2c_cases if c["outcome"]["onTime"])
-        print(f"\nO2C Details:")
+        print("\nO2C Details:")
         print(f"  Avg events/case:  {o2c_avg:.1f}")
         print(f"  On-time:          {o2c_ontime}/{len(o2c_cases)} ({100*o2c_ontime/len(o2c_cases):.0f}%)")
         print(f"  Rework/reversal:  {o2c_rework}/{len(o2c_cases)} ({100*o2c_rework/len(o2c_cases):.0f}%)")
@@ -945,7 +945,7 @@ def _print_summary(cases: list[dict]) -> None:
         for c in o2c_cases:
             for e in c["events"]:
                 o2c_activities[e["activity"]] = o2c_activities.get(e["activity"], 0) + 1
-        print(f"  Activity counts:")
+        print("  Activity counts:")
         for act, cnt in sorted(o2c_activities.items(), key=lambda x: -x[1]):
             print(f"    {act}: {cnt}")
 
@@ -954,7 +954,7 @@ def _print_summary(cases: list[dict]) -> None:
         p2p_avg = p2p_events / len(p2p_cases)
         p2p_rework = sum(1 for c in p2p_cases if c["outcome"]["rework"])
         p2p_ontime = sum(1 for c in p2p_cases if c["outcome"]["onTime"])
-        print(f"\nP2P Details:")
+        print("\nP2P Details:")
         print(f"  Avg events/case:  {p2p_avg:.1f}")
         print(f"  On-time:          {p2p_ontime}/{len(p2p_cases)} ({100*p2p_ontime/len(p2p_cases):.0f}%)")
         print(f"  Rework/reversal:  {p2p_rework}/{len(p2p_cases)} ({100*p2p_rework/len(p2p_cases):.0f}%)")
@@ -963,7 +963,7 @@ def _print_summary(cases: list[dict]) -> None:
         for c in p2p_cases:
             for e in c["events"]:
                 p2p_activities[e["activity"]] = p2p_activities.get(e["activity"], 0) + 1
-        print(f"  Activity counts:")
+        print("  Activity counts:")
         for act, cnt in sorted(p2p_activities.items(), key=lambda x: -x[1]):
             print(f"    {act}: {cnt}")
 

@@ -21,7 +21,11 @@ import sqlite3
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    from ..encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
+    from ..training.data_loader import EventSequenceDataset
 
 logger = logging.getLogger(__name__)
 
@@ -1001,7 +1005,7 @@ class AetherDataPipeline:
             cursor.execute(
                 "SELECT ocel_id, ocel_type FROM event"
             )
-            event_types = {
+            _event_types = {  # noqa: F841 - kept for future expansion
                 row["ocel_id"]: row["ocel_type"] for row in cursor.fetchall()
             }
 
