@@ -4,7 +4,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/christopherbailey/aether/actions/workflows/ci.yml"><img src="https://github.com/christopherbailey/aether/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/chrbailey/aether/actions/workflows/ci.yml"><img src="https://github.com/chrbailey/aether/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/chrbailey/aether/security/code-scanning"><img src="https://img.shields.io/badge/CodeQL-enabled-brightgreen" alt="CodeQL"></a>
+  <a href="https://github.com/chrbailey/aether/releases/latest"><img src="https://img.shields.io/github/v/release/chrbailey/aether" alt="Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
   &nbsp;
   <a href="#jepa-for-processes">Why JEPA?</a> &bull;
   <a href="#the-problem">The Problem</a> &bull;
