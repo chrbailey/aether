@@ -43,7 +43,12 @@ jobs:
         run: npm run build
 
       - name: Run tests with coverage
+        if: matrix.node-version >= 20
         run: npm run test:coverage
+
+      - name: Run tests (no coverage)
+        if: matrix.node-version < 20
+        run: npm test
 
       - name: Upload coverage to Codecov
         if: matrix.node-version == 20
