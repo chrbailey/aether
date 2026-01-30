@@ -10,7 +10,8 @@
   <a href="#the-problem">The Problem</a> &bull;
   <a href="#how-it-works">How It Works</a> &bull;
   <a href="#quick-start">Quick Start</a> &bull;
-  <a href="docs/ARCHITECTURE.md">Architecture</a>
+  <a href="docs/ARCHITECTURE.md">Architecture</a> &bull;
+  <a href="docs/QUICKSTART.md">Quick Start</a>
 </p>
 
 ---
@@ -56,10 +57,11 @@ No existing system makes this distinction.
 
 ## How It Works
 
-### The Core Formula
+### The Core Formula (v3)
 
 ```
 effective_threshold = base × mode_factor × uncertainty_factor × calibration_factor
+min_floor = 0.50 + 0.05 × log(vocab_size / 20) / log(4)   # v3: vocabulary-aware
 ```
 
 Each factor is independently computed and composable:
@@ -69,8 +71,11 @@ Each factor is independently computed and composable:
 | **Mode** | Operational context (flexible &rarr; strict &rarr; forbidden) | Symbolic governance from PromptSpeak modes |
 | **Uncertainty** | Epistemic ratio of total uncertainty | Only _reducible_ uncertainty tightens governance |
 | **Calibration** | Recent ECE/MCE/Brier score | Poorly calibrated models get tighter oversight |
+| **Vocabulary** | Activity taxonomy complexity (v3) | High-vocab datasets get conservative floors |
 
 The key insight: **aleatoric uncertainty is ignored in governance tightening.** This is the formal contribution. It means the system won't waste human attention on inherently random outcomes.
+
+**v3 addition:** The vocabulary-aware minimum floor prevents regressions on high-activity datasets. At 80+ activities, the floor rises to match static thresholds, implementing a "do no harm" principle.
 
 ### Asymmetric Trust
 
@@ -107,7 +112,7 @@ git clone https://github.com/christopherbailey/aether.git
 cd aether
 npm install
 npm run build
-npm test          # 92 tests — governance, modulation, bridge, tools
+npm test          # 99 tests — governance, modulation, bridge, tools, vocab-aware
 ```
 
 ### Python (ML Core)
@@ -271,10 +276,36 @@ Add to your `claude_desktop_config.json`:
 
 ---
 
+## Benchmark Results
+
+AETHER has been evaluated on **10 process mining datasets** across 5 domains:
+
+| Dataset | Domain | Cases | MCC Improvement | Notes |
+|---------|--------|------:|:---------------:|-------|
+| Road Traffic Fine | Government | 30,074 | **+266%** | Scale validation (150K total) |
+| SAP Workflow | Enterprise | 2,896 | **+31.3%** | Best enterprise result |
+| Wearable Tracker | Retail | 218 | **+17.8%** | O2C process |
+| Sepsis | Healthcare | 210 | +2.3% | Clinical workflows |
+| BPI 2019 | Finance | 500 | +0.6% | Procurement |
+| BPIC 2012 | Finance | 500 | +0.4% | Loan applications |
+| Judicial | Legal | 5 | 0.0% | Novel domain |
+| BPI 2018 | Government | 2,000 | -2.2% | v3 floor applied |
+| NetSuite 2025 | Finance | 274 | -3.3% | High class imbalance |
+| SAP BSP669 | Enterprise | 767 | -24.0% | 77 activities (v3 candidate) |
+
+**Key findings:**
+- AETHER improves MCC on 7/10 datasets
+- Largest improvement at scale: Road Traffic Fine (+266% on 150K cases)
+- v3 vocabulary-aware floor reduces regressions on high-activity datasets
+
+See [`docs/BENCHMARK_COMPARISON.md`](docs/BENCHMARK_COMPARISON.md) for detailed analysis.
+
+---
+
 ## Testing
 
 ```bash
-npm test                          # TypeScript: 92 tests
+npm test                          # TypeScript: 99 tests
 python -m pytest core/tests/ -v   # Python: 303 tests
 npm run test:coverage             # TypeScript coverage report
 npm run test:python:coverage      # Python coverage report
