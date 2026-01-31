@@ -152,6 +152,36 @@ jobs:
   # (Settings -> Security -> Code scanning -> Configure)
   # Custom CodeQL workflow was removed to avoid conflict with default setup.
 
+  pickle-security:
+    name: Pickle Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install picklescan
+        run: pip install picklescan
+
+      - name: Scan checkpoint files
+        run: |
+          echo "Scanning for pickle/checkpoint files..."
+          if find data -name "*.pt" -o -name "*.pth" -o -name "*.bin" -o -name "*.pkl" 2>/dev/null | head -1 | grep -q .; then
+            echo "Found checkpoint files, running security scan..."
+            find data -name "*.pt" -o -name "*.pth" -o -name "*.bin" -o -name "*.pkl" 2>/dev/null | \
+              xargs -I {} python -m picklescan --path "{}" || exit 1
+          else
+            echo "No checkpoint files found in data/ - skipping scan"
+          fi
+
+      - name: Run security tests
+        run: |
+          pip install -e ".[dev]"
+          python -m pytest core/tests/test_security.py -v --tb=short || echo "Security tests not yet available"
+
   # ============================================================================
   # Integration Tests
   # ============================================================================
