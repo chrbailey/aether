@@ -24,6 +24,7 @@ sys.path.insert(0, str(AETHER_ROOT))
 
 from core.encoder.event_encoder import EventEncoder
 from core.encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
+from core.utils.checkpoint import load_checkpoint_unsafe
 from core.world_model.energy import EnergyScorer
 from core.world_model.hierarchical import HierarchicalPredictor
 from core.world_model.latent import LatentVariable
@@ -42,7 +43,7 @@ def load_model(vocab_path, model_path, device):
     with open(vocab_path) as f:
         vocab_data = json.load(f)
 
-    checkpoint = torch.load(model_path, map_location=device, weights_only=False)
+    checkpoint = load_checkpoint_unsafe(model_path, map_location=device, trusted_source=True)
     expected_act_size = checkpoint["encoder"]["structural.activity_embedding.weight"].shape[0]
     expected_res_size = checkpoint["encoder"]["structural.resource_embedding.weight"].shape[0]
 

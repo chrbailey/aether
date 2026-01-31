@@ -26,6 +26,7 @@ import torch.nn.functional as F
 
 from core.encoder.event_encoder import EventEncoder
 from core.encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
+from core.utils.checkpoint import load_checkpoint_unsafe
 from core.world_model.transition import TransitionModel, NUM_ACTIONS, GOVERNANCE_ACTIONS
 from core.world_model.energy import EnergyScorer
 from core.world_model.hierarchical import HierarchicalPredictor, DEFAULT_PHASES
@@ -421,8 +422,8 @@ class TestCheckpointLoading:
         )
         latent_var = LatentVariable()
 
-        checkpoint = torch.load(
-            CHECKPOINT_PATH, map_location="cpu", weights_only=False
+        checkpoint = load_checkpoint_unsafe(
+            CHECKPOINT_PATH, map_location="cpu", trusted_source=True
         )
         encoder.load_state_dict(checkpoint["encoder"])
         transition.load_state_dict(checkpoint["transition"])
@@ -1145,7 +1146,7 @@ class TestDataToModelIntegration:
         energy_scorer = EnergyScorer()
         latent_var = LatentVariable()
 
-        checkpoint = torch.load(CHECKPOINT_PATH, map_location="cpu", weights_only=False)
+        checkpoint = load_checkpoint_unsafe(CHECKPOINT_PATH, map_location="cpu", trusted_source=True)
         encoder.load_state_dict(checkpoint["encoder"])
         predictor.load_state_dict(checkpoint["predictor"])
         transition.load_state_dict(checkpoint["transition"])

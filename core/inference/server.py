@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field
 
 from ..critic.adaptive_conformal import AdaptiveConformalPredictor
 from ..critic.calibration import CalibrationTracker
+from ..utils.checkpoint import load_checkpoint_unsafe
 from ..critic.decomposition import decompose_from_ensemble
 from ..encoder.event_encoder import EventEncoder
 from ..encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
@@ -191,8 +192,8 @@ class AetherInferenceState:
         self.latent_var = LatentVariable().to(self.device)
 
         # Load weights
-        checkpoint = torch.load(
-            checkpoint_path, map_location=self.device, weights_only=False
+        checkpoint = load_checkpoint_unsafe(
+            checkpoint_path, map_location=self.device, trusted_source=True
         )
         self.encoder.load_state_dict(checkpoint["encoder"])
         self.transition.load_state_dict(checkpoint["transition"])
