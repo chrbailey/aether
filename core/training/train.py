@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 
 from ..critic.calibration import CalibrationTracker
 from ..encoder.event_encoder import EventEncoder
+from ..utils.checkpoint import load_checkpoint_unsafe
 from ..encoder.vocabulary import ActivityVocabulary
 from ..world_model.energy import EnergyScorer
 from ..world_model.hierarchical import HierarchicalPredictor
@@ -507,7 +508,7 @@ class AetherTrainer:
         Args:
             path: Path to checkpoint file.
         """
-        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
+        checkpoint = load_checkpoint_unsafe(path, map_location=self.device, trusted_source=True)
         self.encoder.load_state_dict(checkpoint["encoder"])
         self.transition.load_state_dict(checkpoint["transition"])
         self.energy.load_state_dict(checkpoint["energy"])

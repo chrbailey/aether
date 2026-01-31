@@ -20,6 +20,7 @@ from torch.utils.data import DataLoader
 
 from core.encoder.event_encoder import EventEncoder
 from core.encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
+from core.utils.checkpoint import load_checkpoint_unsafe
 from core.world_model.energy import EnergyScorer
 from core.world_model.hierarchical import HierarchicalPredictor
 from core.world_model.latent import LatentVariable
@@ -232,7 +233,7 @@ class TestCheckpointIO:
         path = trainer.save_checkpoint("test_checkpoint.pt")
 
         assert path.exists()
-        checkpoint = torch.load(path, weights_only=False)
+        checkpoint = load_checkpoint_unsafe(path, trusted_source=True)
         expected_keys = {
             "epoch", "encoder", "transition", "energy",
             "predictor", "latent_var", "optimizer", "scheduler",
@@ -264,5 +265,5 @@ class TestCheckpointIO:
         trainer._best_val_loss = 0.042
         path = trainer.save_checkpoint("best_loss_test.pt")
 
-        checkpoint = torch.load(path, weights_only=False)
+        checkpoint = load_checkpoint_unsafe(path, trusted_source=True)
         assert checkpoint["best_val_loss"] == pytest.approx(0.042)
