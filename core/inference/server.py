@@ -6,6 +6,7 @@ match the TypeScript prediction types exactly.
 Endpoints:
     POST /predict  — predict from event sequence with uncertainty
     GET  /calibration — current calibration metrics
+    POST /outcomes — receive actual outcomes for calibration feedback
     GET  /health   — health check
 """
 
@@ -17,7 +18,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Optional
 
 import torch
 import torch.nn.functional as F
@@ -26,7 +27,7 @@ from pydantic import BaseModel, Field
 
 from ..critic.adaptive_conformal import AdaptiveConformalPredictor
 from ..critic.calibration import CalibrationTracker
-from ..utils.checkpoint import load_checkpoint_unsafe
+from ..utils.checkpoint import load_checkpoint_auto, load_checkpoint_unsafe
 from ..critic.decomposition import decompose_from_ensemble
 from ..encoder.event_encoder import EventEncoder
 from ..encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
@@ -128,6 +129,23 @@ class HealthResponse(BaseModel):
     device: str
 
 
+class OutcomeReport(BaseModel):
+    """Report actual outcome for calibration feedback."""
+    prediction_id: str
+    predicted_outcome: str
+    predicted_confidence: float
+    actual_outcome: str
+    case_id: str
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OutcomeResponse(BaseModel):
+    """Response after recording outcome."""
+    calibration_updated: bool
+    predictions_in_window: int
+    current_accuracy: float
+
+
 # ---------------------------------------------------------------------------
 # Server state and model loading
 # ---------------------------------------------------------------------------
@@ -164,15 +182,20 @@ class AetherInferenceState:
         resource_vocab: ResourceVocabulary,
         n_activities: int = 20,
         n_phases: int = 6,
+        trusted_source: bool = True,
     ) -> None:
         """Load model from checkpoint file.
 
+        Supports both SafeTensors (preferred, secure) and legacy .pt formats.
+        Inference NEVER loads training state (optimizer/scheduler) for security.
+
         Args:
-            checkpoint_path: Path to .pt checkpoint file.
+            checkpoint_path: Path to checkpoint (SafeTensors or .pt).
             activity_vocab: Pre-built activity vocabulary.
             resource_vocab: Pre-built resource vocabulary.
             n_activities: Number of activity classes.
             n_phases: Number of process phases.
+            trusted_source: Required for legacy .pt files (uses pickle).
         """
         self.activity_vocab = activity_vocab
         self.resource_vocab = resource_vocab
@@ -191,9 +214,13 @@ class AetherInferenceState:
         ).to(self.device)
         self.latent_var = LatentVariable().to(self.device)
 
-        # Load weights
-        checkpoint = load_checkpoint_unsafe(
-            checkpoint_path, map_location=self.device, trusted_source=True
+        # Load weights (SECURITY: never load training state for inference)
+        # SafeTensors format is preferred as it cannot execute arbitrary code
+        checkpoint = load_checkpoint_auto(
+            checkpoint_path,
+            device=self.device,
+            include_training_state=False,  # Security: inference doesn't need optimizer
+            trusted_source=trusted_source,
         )
         self.encoder.load_state_dict(checkpoint["encoder"])
         self.transition.load_state_dict(checkpoint["transition"])
@@ -260,6 +287,12 @@ class AetherInferenceState:
 
 state = AetherInferenceState()
 
+# In-memory calibration tracker (production would use persistent storage)
+calibration_data: dict[str, Any] = {
+    "predictions": [],
+    "window_size": 100
+}
+
 
 def _load_vocabularies(vocab_path: Path) -> tuple[ActivityVocabulary, ResourceVocabulary]:
     """Load activity and resource vocabularies from saved JSON."""
@@ -283,23 +316,44 @@ def _load_vocabularies(vocab_path: Path) -> tuple[ActivityVocabulary, ResourceVo
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Load model on server startup (modern FastAPI lifespan pattern)."""
-    checkpoint_path = Path("data/models/best.pt")
+    """Load model on server startup (modern FastAPI lifespan pattern).
+
+    Checkpoint loading priority (most secure first):
+    1. SafeTensors format: data/models/best.safetensors
+    2. Legacy pickle format: data/models/best.pt (with warning)
+    """
+    # Try SafeTensors first (preferred, secure), then legacy .pt
+    safetensors_path = Path("data/models/best.safetensors")
+    legacy_path = Path("data/models/best.pt")
     vocab_path = Path("data/events/vocabulary.json")
 
-    if checkpoint_path.exists() and vocab_path.exists():
+    # Determine which checkpoint to use
+    if safetensors_path.exists():
+        checkpoint_path = safetensors_path
+        logger.info("Using SafeTensors checkpoint (secure)")
+    elif legacy_path.exists():
+        checkpoint_path = legacy_path
+        logger.warning(
+            f"Using legacy pickle checkpoint: {legacy_path}. "
+            "Consider migrating to SafeTensors for security."
+        )
+    else:
+        checkpoint_path = None
+
+    if checkpoint_path and vocab_path.exists():
         activity_vocab, resource_vocab = _load_vocabularies(vocab_path)
         state.load_checkpoint(
             checkpoint_path,
             activity_vocab=activity_vocab,
             resource_vocab=resource_vocab,
             n_activities=activity_vocab.size,
+            trusted_source=True,  # Server admin trusts local checkpoints
         )
         logger.info(
             f"Model loaded: {checkpoint_path} "
             f"({activity_vocab.size} activities, {resource_vocab.size} resources)"
         )
-    elif checkpoint_path.exists():
+    elif checkpoint_path:
         # Checkpoint exists but no vocabulary file — create minimal vocab
         activity_vocab = ActivityVocabulary(embed_dim=64)
         resource_vocab = ResourceVocabulary(embed_dim=32)
@@ -307,6 +361,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             checkpoint_path,
             activity_vocab=activity_vocab,
             resource_vocab=resource_vocab,
+            trusted_source=True,
         )
         logger.info(f"Model loaded (no vocab): {checkpoint_path}")
     else:
@@ -505,4 +560,32 @@ async def calibration() -> CalibrationResponse:
         buckets=[
             CalibrationBucketResponse(**b) for b in metrics["buckets"]
         ],
+    )
+
+
+@app.post("/outcomes", response_model=OutcomeResponse)
+async def report_outcome(outcome: OutcomeReport) -> OutcomeResponse:
+    """Receive actual outcome to update calibration metrics."""
+    # Store prediction-outcome pair
+    calibration_data["predictions"].append({
+        "predicted": outcome.predicted_outcome,
+        "confidence": outcome.predicted_confidence,
+        "actual": outcome.actual_outcome,
+        "correct": outcome.predicted_outcome == outcome.actual_outcome,
+        "case_id": outcome.case_id
+    })
+
+    # Keep only recent predictions
+    if len(calibration_data["predictions"]) > calibration_data["window_size"]:
+        calibration_data["predictions"] = calibration_data["predictions"][-calibration_data["window_size"]:]
+
+    # Recalculate calibration metrics
+    correct = sum(1 for p in calibration_data["predictions"] if p["correct"])
+    total = len(calibration_data["predictions"])
+    accuracy = correct / total if total > 0 else 0
+
+    return OutcomeResponse(
+        calibration_updated=True,
+        predictions_in_window=total,
+        current_accuracy=round(accuracy, 4)
     )

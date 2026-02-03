@@ -48,13 +48,28 @@ def mock_state() -> AetherInferenceState:
 
 @pytest.fixture
 def client(mock_state: AetherInferenceState):
-    """Create a TestClient with mocked inference state."""
+    """Create a TestClient with mocked inference state.
+
+    Uses a noop lifespan to avoid loading checkpoint files during testing.
+    """
     if not HAS_TEST_CLIENT:
         pytest.skip("TestClient not available")
 
+    from contextlib import asynccontextmanager
+    from fastapi import FastAPI
+
+    @asynccontextmanager
+    async def noop_lifespan(app):
+        yield
+
+    # Create test app with noop lifespan (doesn't load checkpoint)
+    test_app = FastAPI(lifespan=noop_lifespan)
+    for route in app.routes:
+        test_app.routes.append(route)
+
     # Patch the module-level `state` used by the FastAPI endpoints
     with patch("core.inference.server.state", mock_state):
-        with TestClient(app) as c:
+        with TestClient(test_app) as c:
             yield c
 
 
@@ -260,3 +275,77 @@ class TestPydanticModels:
     def test_predict_request_rejects_missing_case_id(self):
         with pytest.raises(Exception):
             PredictRequest(events=[])  # type: ignore[call-arg]
+
+
+# ============================================================================
+# TestOutcomes
+# ============================================================================
+
+
+@requires_test_client
+class TestOutcomes:
+    """Test the /outcomes endpoint for calibration feedback."""
+
+    def test_post_outcome_updates_calibration(self, client):
+        """Posting actual outcome updates calibration metrics."""
+        outcome = {
+            "prediction_id": "pred_123",
+            "predicted_outcome": "on_time",
+            "predicted_confidence": 0.85,
+            "actual_outcome": "on_time",
+            "case_id": "case_456"
+        }
+
+        response = client.post("/outcomes", json=outcome)
+
+        assert response.status_code == 200
+        assert "calibration_updated" in response.json()
+
+    def test_outcome_returns_prediction_count(self, client):
+        """Outcome response includes predictions in window."""
+        outcome = {
+            "prediction_id": "pred_124",
+            "predicted_outcome": "late",
+            "predicted_confidence": 0.70,
+            "actual_outcome": "on_time",
+            "case_id": "case_457"
+        }
+
+        response = client.post("/outcomes", json=outcome)
+        data = response.json()
+
+        assert response.status_code == 200
+        assert "predictions_in_window" in data
+        assert isinstance(data["predictions_in_window"], int)
+
+    def test_outcome_returns_current_accuracy(self, client):
+        """Outcome response includes current accuracy."""
+        outcome = {
+            "prediction_id": "pred_125",
+            "predicted_outcome": "on_time",
+            "predicted_confidence": 0.90,
+            "actual_outcome": "on_time",
+            "case_id": "case_458"
+        }
+
+        response = client.post("/outcomes", json=outcome)
+        data = response.json()
+
+        assert response.status_code == 200
+        assert "current_accuracy" in data
+        assert isinstance(data["current_accuracy"], float)
+
+    def test_outcome_with_metadata(self, client):
+        """Outcome can include optional metadata."""
+        outcome = {
+            "prediction_id": "pred_126",
+            "predicted_outcome": "on_time",
+            "predicted_confidence": 0.85,
+            "actual_outcome": "on_time",
+            "case_id": "case_459",
+            "metadata": {"source": "sap_o2c", "batch": 42}
+        }
+
+        response = client.post("/outcomes", json=outcome)
+
+        assert response.status_code == 200
