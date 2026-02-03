@@ -1,0 +1,148 @@
+{
+  "benchmark": "AETHER BPI 2013 Incident Governance Benchmark (v2 bidirectional)",
+  "dataset": {
+    "label": "BPI Challenge 2013 - Volvo IT Incident Management (ITSM)",
+    "data_dir": "/Volumes/OWC drive/Dev/aether/data/external/bpi2013_incident",
+    "total_cases": 1511,
+    "evaluated": 1511,
+    "needs_review": 274,
+    "review_rate": 0.1813,
+    "accuracy": 0.8187,
+    "source": "BPI Challenge 2013 - Volvo IT Incident Management",
+    "domain": "IT Service Management (ITSM)",
+    "relevance": "ServiceNow competitor positioning - real-world ITSM incident data"
+  },
+  "model": {
+    "checkpoint": "/Volumes/OWC drive/Dev/aether/data/external/bpi2013_incident/models/best.safetensors",
+    "calibration": {},
+    "ensemble_size": 10,
+    "noise_sigma": 0.1
+  },
+  "timestamp": "2026-02-03T04:38:56.694062+00:00",
+  "per_mode": {
+    "flexible": {
+      "mode_factor": 1.0,
+      "static": {
+        "tp": 205,
+        "fp": 102,
+        "tn": 1135,
+        "fn": 69,
+        "precision": 0.6678,
+        "recall": 0.7482,
+        "f1": 0.7057,
+        "fpr": 0.0825,
+        "specificity": 0.9175,
+        "mcc": 0.6375,
+        "burden": 0.2032,
+        "total": 1511,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 135,
+        "fp": 63,
+        "tn": 1174,
+        "fn": 139,
+        "precision": 0.6818,
+        "recall": 0.4927,
+        "f1": 0.572,
+        "fpr": 0.0509,
+        "specificity": 0.9491,
+        "mcc": 0.5044,
+        "burden": 0.131,
+        "total": 1511,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.0,
+        "unc_epistemic": 0.0,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      },
+      "mcc_improvement": -0.1331
+    },
+    "standard": {
+      "mode_factor": 1.1,
+      "static": {
+        "tp": 205,
+        "fp": 102,
+        "tn": 1135,
+        "fn": 69,
+        "precision": 0.6678,
+        "recall": 0.7482,
+        "f1": 0.7057,
+        "fpr": 0.0825,
+        "specificity": 0.9175,
+        "mcc": 0.6375,
+        "burden": 0.2032,
+        "total": 1511,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 135,
+        "fp": 63,
+        "tn": 1174,
+        "fn": 139,
+        "precision": 0.6818,
+        "recall": 0.4927,
+        "f1": 0.572,
+        "fpr": 0.0509,
+        "specificity": 0.9491,
+        "mcc": 0.5044,
+        "burden": 0.131,
+        "total": 1511,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.1,
+        "unc_epistemic": 0.0,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      },
+      "mcc_improvement": -0.1331
+    },
+    "strict": {
+      "mode_factor": 1.2,
+      "static": {
+        "tp": 205,
+        "fp": 102,
+        "tn": 1135,
+        "fn": 69,
+        "precision": 0.6678,
+        "recall": 0.7482,
+        "f1": 0.7057,
+        "fpr": 0.0825,
+        "specificity": 0.9175,
+        "mcc": 0.6375,
+        "burden": 0.2032,
+        "total": 1511,
+        "threshold": 0.55
+      },
+      "aether": {
+        "tp": 135,
+        "fp": 63,
+        "tn": 1174,
+        "fn": 139,
+        "precision": 0.6818,
+        "recall": 0.4927,
+        "f1": 0.572,
+        "fpr": 0.0509,
+        "specificity": 0.9491,
+        "mcc": 0.5044,
+        "burden": 0.131,
+        "total": 1511,
+        "threshold_mean": 0.5,
+        "threshold_std": 0.0
+      },
+      "factor_decomposition": {
+        "mode": 1.2,
+        "unc_epistemic": 0.0,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755
+      },
+      "mcc_improvement": -0.1331
+    }
+  },
+  "elapsed_seconds": 10.69
+}

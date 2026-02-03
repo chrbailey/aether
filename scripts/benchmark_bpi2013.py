@@ -1,7 +1,12 @@
 """
-Benchmark AETHER governance formula on Wearable Tracker Customer Journey data.
+Benchmark AETHER governance formula on BPI 2013 Incident (Volvo IT ITSM) data.
 
-Evaluates v2 bidirectional formula: effective_threshold = base × mode × uncertainty × calibration
+Evaluates v2 bidirectional formula: effective_threshold = base * mode * uncertainty * calibration
+
+Dataset: BPI Challenge 2013 - Volvo IT incident management (ITSM)
+- Real-world ITSM incident tickets from Volvo IT
+- Activities: Accepted, Completed, Queued, Unmatched
+- Highly relevant for ServiceNow competitor positioning
 """
 
 import sys
@@ -31,7 +36,7 @@ BASE_THRESHOLDS = {
 }
 MODE_FACTORS = {"flexible": 1.0, "standard": 1.1, "strict": 1.2}
 
-DATA_DIR = AETHER_ROOT / "data" / "external" / "wearable_tracker"
+DATA_DIR = AETHER_ROOT / "data" / "external" / "bpi2013_incident"
 DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
 
 
@@ -89,19 +94,34 @@ def load_model(vocab_path, model_path, device):
         m.to(device)
         m.eval()
 
-    return encoder, transition, energy, predictor, latent_var, activity_vocab, resource_vocab, checkpoint.get("calibration", {})
+    # Load calibration from training state if available
+    calibration = {}
+    training_path = Path(model_path).with_suffix(".training.pt")
+    if training_path.exists():
+        try:
+            training_state = torch.load(training_path, map_location=device, weights_only=False)
+            calibration = training_state.get("calibration", {})
+        except Exception:
+            pass
+
+    return encoder, transition, energy, predictor, latent_var, activity_vocab, resource_vocab, calibration
 
 
 def predict_with_uncertainty(encoder, transition, energy, predictor, latent_var, activity_vocab,
                              resource_vocab, events, device, n_samples=10, noise_sigma=0.1):
-    """Make prediction with uncertainty estimation using MC dropout / noise injection."""
+    """Make prediction with uncertainty estimation using MC dropout / noise injection.
+
+    Matches training evaluation: predicts next activity from the LAST position state,
+    comparing against the actual next activity in the sequence.
+    """
     if len(events) < 2:
         return None, None, None, None
 
-    # Encode events
+    # Encode ALL events (including the last one to predict what comes next)
+    # But we evaluate prediction from second-to-last position -> last activity
     activity_ids = []
     resource_ids = []
-    for e in events[:-1]:
+    for e in events:
         act = e.get("activity", "<UNK>")
         res = e.get("resource", "unknown")
         activity_ids.append(activity_vocab.encode(act))
@@ -116,7 +136,9 @@ def predict_with_uncertainty(encoder, transition, energy, predictor, latent_var,
     all_probs = []
     with torch.no_grad():
         h = encoder(activity_tensor, resource_tensor, attr_tensor, mask)
-        z = h.mean(dim=1)  # Pool over sequence
+        # Use the second-to-last position to predict the last activity
+        # This matches training evaluation: z[:-1] predicts target_activities[:-1]
+        z = h[:, -2, :]  # State at second-to-last position
 
         for _ in range(n_samples):
             z_noisy = z + torch.randn_like(z) * noise_sigma
@@ -134,7 +156,7 @@ def predict_with_uncertainty(encoder, transition, energy, predictor, latent_var,
     aleatoric = -(mean_probs * np.log(mean_probs + 1e-10)).sum(axis=-1).mean()
     total_unc = epistemic + aleatoric
 
-    # Ground truth
+    # Ground truth: the last activity in the sequence
     true_activity = events[-1].get("activity", "<UNK>")
     true_idx = activity_vocab.encode(true_activity)
     is_correct = pred_idx == true_idx
@@ -175,7 +197,7 @@ def compute_metrics(tp, fp, tn, fn):
 
 def main():
     print("=" * 60)
-    print("WEARABLE TRACKER GOVERNANCE BENCHMARK")
+    print("BPI 2013 INCIDENT (VOLVO IT ITSM) GOVERNANCE BENCHMARK")
     print("=" * 60)
 
     start_time = time.time()
@@ -184,7 +206,7 @@ def main():
     print("Loading model...")
     encoder, transition, energy, predictor, latent_var, activity_vocab, resource_vocab, model_calib = load_model(
         DATA_DIR / "vocabulary.json",
-        DATA_DIR / "models" / "best.pt",
+        DATA_DIR / "models" / "best.safetensors",
         DEVICE
     )
 
@@ -192,7 +214,9 @@ def main():
     with open(DATA_DIR / "val_cases.json") as f:
         cases = json.load(f)
 
-    print(f"Evaluating {len(cases)} cases...")
+    print(f"Evaluating {len(cases)} validation cases...")
+    print(f"Activities: {list(activity_vocab._token_to_idx.keys())[:10]}...")
+    print(f"Device: {DEVICE}")
 
     # Collect predictions
     results = []
@@ -227,13 +251,11 @@ def main():
             wrong_count += 1
 
     accuracy = correct_count / (correct_count + wrong_count)
-    print(f"Model accuracy: {accuracy:.1%}")
+    print(f"\nModel accuracy: {accuracy:.1%}")
+    print(f"Correct predictions: {correct_count}")
     print(f"Cases needing review: {wrong_count} ({wrong_count/(correct_count+wrong_count):.1%})")
 
     # Compute uncertainty stats
-    _correct_results = [r for r in results if r["is_correct"]]  # noqa: F841
-    _wrong_results = [r for r in results if not r["is_correct"]]  # noqa: F841
-
     epistemic_mean = np.mean([r["epistemic"] for r in results])
     total_mean = np.mean([r["total_unc"] for r in results])
     ece = model_calib.get("ece", 0.02)
@@ -245,19 +267,21 @@ def main():
 
     # Benchmark each mode
     benchmark_results = {
-        "benchmark": "AETHER Wearable Tracker Governance Benchmark (v2 bidirectional)",
+        "benchmark": "AETHER BPI 2013 Incident Governance Benchmark (v2 bidirectional)",
         "dataset": {
-            "label": "Wearable Tracker",
+            "label": "BPI Challenge 2013 - Volvo IT Incident Management (ITSM)",
             "data_dir": str(DATA_DIR),
             "total_cases": len(cases),
             "evaluated": len(results),
             "needs_review": wrong_count,
             "review_rate": round(wrong_count / len(results), 4),
             "accuracy": round(accuracy, 4),
-            "source": "Wearable Tracker NetSuite Export (2013-2016)"
+            "source": "BPI Challenge 2013 - Volvo IT Incident Management",
+            "domain": "IT Service Management (ITSM)",
+            "relevance": "ServiceNow competitor positioning - real-world ITSM incident data"
         },
         "model": {
-            "checkpoint": str(DATA_DIR / "models" / "best.pt"),
+            "checkpoint": str(DATA_DIR / "models" / "best.safetensors"),
             "calibration": model_calib,
             "ensemble_size": 10,
             "noise_sigma": 0.1
@@ -317,14 +341,18 @@ def main():
         aether_metrics["threshold_mean"] = round(np.mean(aether_thresholds), 6)
         aether_metrics["threshold_std"] = round(np.std(aether_thresholds), 6)
 
+        mcc_improvement = aether_metrics["mcc"] - static_metrics["mcc"]
+
         print(f"Static:  MCC={static_metrics['mcc']:.4f}, F1={static_metrics['f1']:.4f}, Burden={static_metrics['burden']:.1%}")
         print(f"AETHER:  MCC={aether_metrics['mcc']:.4f}, F1={aether_metrics['f1']:.4f}, Burden={aether_metrics['burden']:.1%}, Thresh={aether_metrics['threshold_mean']:.4f}")
+        print(f"MCC Improvement: {mcc_improvement:+.4f}")
 
         benchmark_results["per_mode"][mode] = {
             "mode_factor": factor,
             "static": static_metrics,
             "aether": aether_metrics,
-            "factor_decomposition": factors
+            "factor_decomposition": factors,
+            "mcc_improvement": round(mcc_improvement, 4)
         }
 
     # Save results
@@ -335,7 +363,30 @@ def main():
     with open(output_path, "w") as f:
         json.dump(benchmark_results, f, indent=2)
     print(f"\nResults saved to: {output_path}")
-    print(f"Elapsed: {elapsed:.1f}s")
+
+    # Also copy to benchmarks directory
+    benchmarks_dir = AETHER_ROOT / "data" / "benchmarks"
+    benchmarks_dir.mkdir(parents=True, exist_ok=True)
+    benchmarks_path = benchmarks_dir / "bpi2013.json"
+    with open(benchmarks_path, "w") as f:
+        json.dump(benchmark_results, f, indent=2)
+    print(f"Also saved to: {benchmarks_path}")
+
+    # Summary
+    print("\n" + "=" * 60)
+    print("SUMMARY")
+    print("=" * 60)
+    print(f"Dataset: BPI 2013 Incident (Volvo IT ITSM)")
+    print(f"Model Accuracy: {accuracy:.1%}")
+    print(f"Review Burden (baseline): {wrong_count/(correct_count+wrong_count):.1%}")
+
+    # Best mode performance
+    best_mode = max(benchmark_results["per_mode"].items(), key=lambda x: x[1]["mcc_improvement"])
+    print(f"\nBest Mode: {best_mode[0]}")
+    print(f"  MCC Improvement: {best_mode[1]['mcc_improvement']:+.4f}")
+    print(f"  AETHER MCC: {best_mode[1]['aether']['mcc']:.4f}")
+    print(f"  Static MCC: {best_mode[1]['static']['mcc']:.4f}")
+    print(f"\nElapsed: {elapsed:.1f}s")
 
 
 if __name__ == "__main__":

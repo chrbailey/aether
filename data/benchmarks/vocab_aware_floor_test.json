@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-01-30T15:53:29.414369+00:00",
+  "formula": "min_threshold = 0.50 + 0.05 * log(V/20) / log(4)",
+  "per_dataset": [
+    {
+      "dataset": "sap_bsp669",
+      "vocab_size": 80,
+      "cases": 767,
+      "static_mcc": 0.2013,
+      "v2_mcc": 0.1305,
+      "v2_threshold": 0.5,
+      "v3_mcc": 0.2013,
+      "v3_threshold": 0.55,
+      "v3_min_floor": 0.55,
+      "v2_vs_static": -0.0708,
+      "v3_vs_static": 0.0
+    }
+  ],
+  "summary": {
+    "v2_total_mcc_delta": -0.0708,
+    "v3_total_mcc_delta": 0.0,
+    "v2_regression_count": 1,
+    "v3_regression_count": 0
+  }
+}

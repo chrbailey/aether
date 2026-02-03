@@ -1,7 +1,9 @@
 """
-Benchmark AETHER governance formula on Wearable Tracker Customer Journey data.
+Benchmark AETHER governance formula on BPI Challenge 2018 Agriculture data.
 
-Evaluates v2 bidirectional formula: effective_threshold = base × mode × uncertainty × calibration
+Evaluates v3 formula with vocabulary-aware minimum floor:
+  effective_threshold = base * mode * uncertainty * calibration
+  min_floor = 0.50 + 0.05 * log(vocab_size / 20) / log(4)
 """
 
 import sys
@@ -31,7 +33,7 @@ BASE_THRESHOLDS = {
 }
 MODE_FACTORS = {"flexible": 1.0, "standard": 1.1, "strict": 1.2}
 
-DATA_DIR = AETHER_ROOT / "data" / "external" / "wearable_tracker"
+DATA_DIR = AETHER_ROOT / "data" / "external" / "bpi2015_permits"
 DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
 
 
@@ -93,15 +95,23 @@ def load_model(vocab_path, model_path, device):
 
 
 def predict_with_uncertainty(encoder, transition, energy, predictor, latent_var, activity_vocab,
-                             resource_vocab, events, device, n_samples=10, noise_sigma=0.1):
-    """Make prediction with uncertainty estimation using MC dropout / noise injection."""
+                             resource_vocab, events, device, n_samples=10, noise_sigma=0.1, max_seq_len=128):
+    """Make prediction with uncertainty estimation using MC dropout / noise injection.
+
+    Matches training evaluation: predicts next activity from the LAST position state,
+    comparing against the actual next activity in the sequence.
+    """
     if len(events) < 2:
         return None, None, None, None
 
-    # Encode events
+    # Truncate to max_seq_len
+    events = events[:max_seq_len]
+
+    # Encode ALL events (including the last one to predict what comes next)
+    # But we evaluate prediction from second-to-last position -> last activity
     activity_ids = []
     resource_ids = []
-    for e in events[:-1]:
+    for e in events:
         act = e.get("activity", "<UNK>")
         res = e.get("resource", "unknown")
         activity_ids.append(activity_vocab.encode(act))
@@ -116,7 +126,9 @@ def predict_with_uncertainty(encoder, transition, energy, predictor, latent_var,
     all_probs = []
     with torch.no_grad():
         h = encoder(activity_tensor, resource_tensor, attr_tensor, mask)
-        z = h.mean(dim=1)  # Pool over sequence
+        # Use the second-to-last position to predict the last activity
+        # This matches training evaluation: z[:-1] predicts target_activities[:-1]
+        z = h[:, -2, :]  # State at second-to-last position
 
         for _ in range(n_samples):
             z_noisy = z + torch.randn_like(z) * noise_sigma
@@ -134,7 +146,7 @@ def predict_with_uncertainty(encoder, transition, energy, predictor, latent_var,
     aleatoric = -(mean_probs * np.log(mean_probs + 1e-10)).sum(axis=-1).mean()
     total_unc = epistemic + aleatoric
 
-    # Ground truth
+    # Ground truth: the last activity in the sequence
     true_activity = events[-1].get("activity", "<UNK>")
     true_idx = activity_vocab.encode(true_activity)
     is_correct = pred_idx == true_idx
@@ -142,14 +154,37 @@ def predict_with_uncertainty(encoder, transition, energy, predictor, latent_var,
     return confidence, is_correct, epistemic, total_unc
 
 
-def compute_adaptive_threshold(base, mode_factor, epistemic_mean, total_mean, ece, epistemic_baseline=0.0001):
-    """Compute v2 bidirectional adaptive threshold."""
+def compute_vocab_aware_min_floor(vocab_size, base_floor=0.50, floor_increment=0.05, ref_vocab=20, scale_factor=4):
+    """Compute v3 vocabulary-aware minimum threshold floor.
+
+    Formula: min_floor = base + increment * log(V / ref) / log(scale)
+
+    At ref_vocab (20): min = 0.50 (unchanged from v2)
+    At 80 activities:  min = 0.55 (matches static baseline)
+    At 320 activities: min = 0.60 (more conservative)
+    """
+    if vocab_size <= ref_vocab:
+        return base_floor
+    import math
+    log_ratio = math.log(vocab_size / ref_vocab)
+    log_scale = math.log(scale_factor)
+    adjustment = floor_increment * (log_ratio / log_scale)
+    return min(base_floor + adjustment, 0.94)
+
+
+def compute_adaptive_threshold(base, mode_factor, epistemic_mean, total_mean, ece, vocab_size=None, epistemic_baseline=0.0001):
+    """Compute v3 adaptive threshold with vocabulary-aware floor."""
     unc_epistemic = 0.5 + 0.5 * np.tanh((epistemic_baseline - epistemic_mean) / (epistemic_baseline + 1e-8))
     unc_total = 1.0 + 0.5 * np.tanh((total_mean - 0.01) / 0.01)
     calibration = 1.0 + 0.5 * np.tanh((ece - 0.1) / 0.1)
     effective = base * mode_factor * unc_epistemic * unc_total * calibration
-    return max(0.5, min(0.98, effective)), {
-        "mode": mode_factor, "unc_epistemic": unc_epistemic, "unc_total": unc_total, "calibration": calibration
+
+    # v3: Use vocabulary-aware minimum floor
+    min_floor = compute_vocab_aware_min_floor(vocab_size) if vocab_size else 0.5
+
+    return max(min_floor, min(0.98, effective)), {
+        "mode": mode_factor, "unc_epistemic": unc_epistemic, "unc_total": unc_total,
+        "calibration": calibration, "min_floor": min_floor
     }
 
 
@@ -175,7 +210,7 @@ def compute_metrics(tp, fp, tn, fn):
 
 def main():
     print("=" * 60)
-    print("WEARABLE TRACKER GOVERNANCE BENCHMARK")
+    print("BPI 2018 AGRICULTURE GOVERNANCE BENCHMARK")
     print("=" * 60)
 
     start_time = time.time()
@@ -199,7 +234,7 @@ def main():
     correct_count = 0
     wrong_count = 0
 
-    for case in cases:
+    for i, case in enumerate(cases):
         events = case.get("events", [])
         if len(events) < 2:
             continue
@@ -226,35 +261,43 @@ def main():
         else:
             wrong_count += 1
 
-    accuracy = correct_count / (correct_count + wrong_count)
+        if (i + 1) % 500 == 0:
+            print(f"  Processed {i + 1:,} cases...")
+
+    accuracy = correct_count / (correct_count + wrong_count) if (correct_count + wrong_count) > 0 else 0
     print(f"Model accuracy: {accuracy:.1%}")
-    print(f"Cases needing review: {wrong_count} ({wrong_count/(correct_count+wrong_count):.1%})")
+    print(f"Cases needing review: {wrong_count} ({wrong_count/(correct_count+wrong_count):.1%})" if (correct_count + wrong_count) > 0 else "N/A")
 
     # Compute uncertainty stats
-    _correct_results = [r for r in results if r["is_correct"]]  # noqa: F841
-    _wrong_results = [r for r in results if not r["is_correct"]]  # noqa: F841
-
-    epistemic_mean = np.mean([r["epistemic"] for r in results])
-    total_mean = np.mean([r["total_unc"] for r in results])
+    epistemic_mean = np.mean([r["epistemic"] for r in results]) if results else 0
+    total_mean = np.mean([r["total_unc"] for r in results]) if results else 0
     ece = model_calib.get("ece", 0.02)
+
+    # Get vocabulary size for v3 floor computation
+    vocab_size = activity_vocab.size
+    min_floor = compute_vocab_aware_min_floor(vocab_size)
 
     print("\nUncertainty stats:")
     print(f"  Epistemic mean: {epistemic_mean:.6f}")
     print(f"  Total mean: {total_mean:.6f}")
     print(f"  Model ECE: {ece:.4f}")
+    print(f"  Vocabulary size: {vocab_size} activities")
+    print(f"  v3 min floor: {min_floor:.4f}")
 
     # Benchmark each mode
     benchmark_results = {
-        "benchmark": "AETHER Wearable Tracker Governance Benchmark (v2 bidirectional)",
+        "benchmark": "AETHER BPI 2018 Agriculture Governance Benchmark (v3 vocab-aware)",
         "dataset": {
-            "label": "Wearable Tracker",
+            "label": "BPI Challenge 2018 - Agriculture Subsidy",
             "data_dir": str(DATA_DIR),
             "total_cases": len(cases),
             "evaluated": len(results),
             "needs_review": wrong_count,
-            "review_rate": round(wrong_count / len(results), 4),
+            "review_rate": round(wrong_count / len(results), 4) if results else 0,
             "accuracy": round(accuracy, 4),
-            "source": "Wearable Tracker NetSuite Export (2013-2016)"
+            "source": "BPI Challenge 2018 - German Agriculture Subsidy Applications",
+            "vocab_size": vocab_size,
+            "v3_min_floor": round(min_floor, 4)
         },
         "model": {
             "checkpoint": str(DATA_DIR / "models" / "best.pt"),
@@ -271,9 +314,9 @@ def main():
     for mode, factor in MODE_FACTORS.items():
         print(f"\n--- Mode: {mode} (factor={factor}) ---")
 
-        # Compute adaptive threshold
+        # Compute adaptive threshold with v3 vocab-aware floor
         adaptive_thresh, factors = compute_adaptive_threshold(
-            base, factor, epistemic_mean, total_mean, ece
+            base, factor, epistemic_mean, total_mean, ece, vocab_size=vocab_size
         )
 
         # Static baseline
@@ -314,17 +357,21 @@ def main():
         static_metrics = compute_metrics(static_tp, static_fp, static_tn, static_fn)
         static_metrics["threshold"] = static_thresh
         aether_metrics = compute_metrics(aether_tp, aether_fp, aether_tn, aether_fn)
-        aether_metrics["threshold_mean"] = round(np.mean(aether_thresholds), 6)
-        aether_metrics["threshold_std"] = round(np.std(aether_thresholds), 6)
+        aether_metrics["threshold_mean"] = round(np.mean(aether_thresholds), 6) if aether_thresholds else 0
+        aether_metrics["threshold_std"] = round(np.std(aether_thresholds), 6) if aether_thresholds else 0
+
+        mcc_improvement = aether_metrics["mcc"] - static_metrics["mcc"]
 
         print(f"Static:  MCC={static_metrics['mcc']:.4f}, F1={static_metrics['f1']:.4f}, Burden={static_metrics['burden']:.1%}")
         print(f"AETHER:  MCC={aether_metrics['mcc']:.4f}, F1={aether_metrics['f1']:.4f}, Burden={aether_metrics['burden']:.1%}, Thresh={aether_metrics['threshold_mean']:.4f}")
+        print(f"MCC Improvement: {mcc_improvement:+.4f}")
 
         benchmark_results["per_mode"][mode] = {
             "mode_factor": factor,
             "static": static_metrics,
             "aether": aether_metrics,
-            "factor_decomposition": factors
+            "factor_decomposition": factors,
+            "mcc_improvement": round(mcc_improvement, 4)
         }
 
     # Save results
@@ -335,6 +382,15 @@ def main():
     with open(output_path, "w") as f:
         json.dump(benchmark_results, f, indent=2)
     print(f"\nResults saved to: {output_path}")
+
+    # Also copy to benchmarks directory
+    benchmarks_dir = AETHER_ROOT / "data" / "benchmarks"
+    benchmarks_dir.mkdir(parents=True, exist_ok=True)
+    benchmarks_path = benchmarks_dir / "bpi2018.json"
+    with open(benchmarks_path, "w") as f:
+        json.dump(benchmark_results, f, indent=2)
+    print(f"Also saved to: {benchmarks_path}")
+
     print(f"Elapsed: {elapsed:.1f}s")
 
 

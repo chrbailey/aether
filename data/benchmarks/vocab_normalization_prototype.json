@@ -1,0 +1,86 @@
+{
+  "dataset": "sap_bsp669",
+  "vocab_size": 80,
+  "reference_vocab": 20,
+  "timestamp": "2026-01-30T15:46:53.733837+00:00",
+  "cases_evaluated": 767,
+  "accuracy": 0.3885,
+  "epistemic_mean": 0.0001289384978421039,
+  "total_mean": 0.9132982354946289,
+  "results": {
+    "static": {
+      "tp": 291,
+      "fp": 114,
+      "tn": 184,
+      "fn": 178,
+      "precision": 0.7185,
+      "recall": 0.6205,
+      "f1": 0.6659,
+      "fpr": 0.3826,
+      "specificity": 0.6174,
+      "mcc": 0.2323,
+      "burden": 0.528,
+      "total": 767,
+      "threshold_mean": 0.55,
+      "method": "static"
+    },
+    "v2_current": {
+      "tp": 143,
+      "fp": 46,
+      "tn": 252,
+      "fn": 326,
+      "precision": 0.7566,
+      "recall": 0.3049,
+      "f1": 0.4347,
+      "fpr": 0.1544,
+      "specificity": 0.8456,
+      "mcc": 0.1703,
+      "burden": 0.2464,
+      "total": 767,
+      "threshold_mean": 0.5,
+      "method": "v2_current",
+      "threshold": 0.5,
+      "factors": {
+        "mode": 1.1,
+        "unc_epistemic": 0.35922899655431884,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755,
+        "version": "v2_fixed_baseline"
+      }
+    },
+    "v3_proposed": {
+      "tp": 143,
+      "fp": 46,
+      "tn": 252,
+      "fn": 326,
+      "precision": 0.7566,
+      "recall": 0.3049,
+      "f1": 0.4347,
+      "fpr": 0.1544,
+      "specificity": 0.8456,
+      "mcc": 0.1703,
+      "burden": 0.2464,
+      "total": 767,
+      "threshold_mean": 0.5,
+      "method": "v3_proposed",
+      "threshold": 0.5,
+      "factors": {
+        "mode": 1.1,
+        "unc_epistemic": 0.7537044124302957,
+        "unc_total": 1.5,
+        "calibration": 0.6679816148660755,
+        "scaled_baseline": 0.0002,
+        "entropy_ratio": 0.6836408181204355,
+        "epistemic_normalized": 8.814762015199593e-05,
+        "version": "v3_vocab_normalized"
+      }
+    }
+  },
+  "mcc_improvements": {
+    "v2_vs_static": -0.062,
+    "v3_vs_static": -0.062,
+    "v3_vs_v2": 0.0
+  },
+  "conclusion": "v3_no_improvement",
+  "elapsed_seconds": 24.93
+}
