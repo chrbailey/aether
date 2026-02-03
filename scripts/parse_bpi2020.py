@@ -1,13 +1,13 @@
 """
-Parse Road Traffic Fine Management Process XES file into AETHER event log format.
+Parse BPI 2020 Travel Expense Reimbursement XES file into AETHER event log format.
 
-Dataset: Road Traffic Fine Management Process from 4TU
-- 150,370 cases
-- 561,470 events
-- 11 unique activities
-- Process: handling of road traffic fines from creation through payment/appeal
+Dataset: BPI Challenge 2020 - Domestic Declarations from TU Eindhoven
+- 10,500 cases
+- 56,437 events
+- 17 unique activities
+- Process: expense reimbursement workflow (submit -> approve -> pay)
 
-Source: https://data.4tu.nl/articles/dataset/Road_Traffic_Fine_Management_Process/12683249
+Source: https://data.4tu.nl/articles/dataset/BPI_Challenge_2020_Domestic_Declarations/12692543
 """
 
 from __future__ import annotations
@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 # Paths
 AETHER_ROOT = Path("/Volumes/OWC drive/Dev/aether")
-DATA_DIR = AETHER_ROOT / "data" / "external" / "road_traffic_fine"
-XES_PATH = DATA_DIR / "Road_Traffic_Fine_Management_Process.xes"
+DATA_DIR = AETHER_ROOT / "data" / "external" / "bpi2020_travel"
+XES_PATH = DATA_DIR / "DomesticDeclarations.xes"
 OUTPUT_DIR = DATA_DIR
 
 # XES namespace handling
@@ -95,7 +95,6 @@ def parse_xes_file(xes_path: Path, max_cases: Optional[int] = None) -> list[dict
     current_trace = None
     current_events = []
     trace_attributes = {}
-    inside_event = False  # Track whether we're inside an event element
 
     # Use iterparse for memory efficiency
     context = ET.iterparse(str(xes_path), events=("start", "end"))
@@ -112,9 +111,6 @@ def parse_xes_file(xes_path: Path, max_cases: Optional[int] = None) -> list[dict
                 current_trace = {}
                 current_events = []
                 trace_attributes = {}
-                inside_event = False
-            elif tag == "event" and current_trace is not None:
-                inside_event = True
 
         elif event_type == "end":
             if tag == "trace":
@@ -195,7 +191,6 @@ def parse_xes_file(xes_path: Path, max_cases: Optional[int] = None) -> list[dict
                 elem.clear()
 
             elif tag == "event" and current_trace is not None:
-                inside_event = False  # Exiting event element
                 # Parse event
                 event_data = {}
                 event_attrs = {}
@@ -229,8 +224,8 @@ def parse_xes_file(xes_path: Path, max_cases: Optional[int] = None) -> list[dict
                 current_events.append(event_data)
                 elem.clear()
 
-            elif current_trace is not None and not inside_event and tag in ("string", "int", "float", "boolean", "date"):
-                # Trace-level attribute (only capture when NOT inside an event)
+            elif current_trace is not None and tag in ("string", "int", "float", "boolean", "date"):
+                # Trace-level attribute
                 key = elem.get("key", "")
                 value = elem.get("value", "")
                 if key and key not in ("identity:id",):

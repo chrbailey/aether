@@ -233,9 +233,20 @@ Low energy = transition matches world model expectations. High energy = anomalou
 
 | Source | Format | Content |
 |--------|--------|---------|
+| **BPI 2017** | **Parquet/JSON** | **Loan applications, 31K cases (primary benchmark)** |
+| BPI 2020 | JSON | Travel expense declarations, 10.5K cases |
+| Road Traffic Fine | XES/JSON | Traffic fine management, 150K cases |
 | SAP SQLite | `sap.sqlite` | VBFA document flow, CDHDR change documents |
 | BPI 2019 | JSON | Real purchase-to-pay, 251K cases |
 | O2C / P2P CSV | CSV | Order-to-cash and purchase-to-pay event logs |
 | OCEL 2.0 P2P | SQLite | Zenodo simulated SAP process (object-centric) |
+
+### Dataset Parsing Scripts
+
+| Script | Dataset | Source |
+|--------|---------|--------|
+| `scripts/parse_bpi2017.py` | BPI Challenge 2017 | Hugging Face (Modzo18/BPIC2017Iteration) |
+| `scripts/parse_bpi2020.py` | BPI Challenge 2020 | 4TU.ResearchData |
+| `scripts/parse_road_traffic.py` | Road Traffic Fine | 4TU.ResearchData |
 
 The unified pipeline (`AetherDataPipeline`) normalizes all sources into a common event format with activity, resource, timestamp, and numerical attributes, then builds shared vocabularies and train/val splits.

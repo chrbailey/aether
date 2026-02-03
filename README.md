@@ -281,11 +281,12 @@ Add to your `claude_desktop_config.json`:
 
 ## Benchmark Results
 
-AETHER has been evaluated on **10 process mining datasets** across 5 domains:
+AETHER has been evaluated on **11 process mining datasets** across 5 domains:
 
 | Dataset | Domain | Cases | MCC Improvement | Notes |
 |---------|--------|------:|:---------------:|-------|
-| Road Traffic Fine | Government | 30,074 | **+266%** | Scale validation (150K total) |
+| **BPI 2017** | **Finance** | **31,509** | **N/A** | **Legitimate benchmark: 70.4% activity acc, simple rules only 49.6%** |
+| Road Traffic Fine | Government | 150,370 | N/A | Trivial task (outcome deterministic from activities)† |
 | SAP Workflow | Enterprise | 2,896 | **+31.3%** | Best enterprise result |
 | Wearable Tracker | Retail | 218 | **+17.8%** | O2C process |
 | Sepsis | Healthcare | 210 | +2.3% | Clinical workflows |
@@ -297,11 +298,12 @@ AETHER has been evaluated on **10 process mining datasets** across 5 domains:
 | SAP BSP669 | Enterprise | 767 | -24.0% | 77 activities (v3 candidate) |
 
 **Key findings:**
-- AETHER improves MCC on 7/10 datasets
-- Largest improvement at scale: Road Traffic Fine (+266% on 150K cases)
+- **BPI 2017 (Loan Applications)** is now the primary benchmark: 31K cases, 26 activities, non-trivial outcome prediction
+- Road Traffic Fine†: Parser bug was fixed (caseId stored activity names); outcome is 100% deterministic (`onTime = has_payment AND NOT has_penalty`) — useful only for activity prediction, not outcome modeling
 - v3 vocabulary-aware floor reduces regressions on high-activity datasets
+- AETHER achieves 81.6% activity accuracy on Road Traffic Fine, 70.4% on BPI 2017
 
-See [`docs/BENCHMARK_COMPARISON.md`](docs/BENCHMARK_COMPARISON.md) for detailed analysis.
+See [`docs/BENCHMARK_COMPARISON.md`](docs/BENCHMARK_COMPARISON.md) for detailed analysis and [`TRAINING.md`](TRAINING.md) for reproducible training instructions.
 
 ---
 
