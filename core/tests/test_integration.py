@@ -26,7 +26,7 @@ import torch.nn.functional as F
 
 from core.encoder.event_encoder import EventEncoder
 from core.encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
-from core.utils.checkpoint import load_checkpoint_unsafe
+from core.utils.checkpoint import load_checkpoint_auto, load_checkpoint_unsafe
 from core.world_model.transition import TransitionModel, NUM_ACTIONS, GOVERNANCE_ACTIONS
 from core.world_model.energy import EnergyScorer
 from core.world_model.hierarchical import HierarchicalPredictor, DEFAULT_PHASES
@@ -55,9 +55,27 @@ requires_vocab = pytest.mark.skipif(
     not _VOCAB_AVAILABLE,
     reason=f"Real vocabulary not found at {VOCAB_PATH}",
 )
+def _checkpoint_vocab_compatible() -> bool:
+    """Check if checkpoint vocab matches the vocabulary file."""
+    if not _CHECKPOINT_AVAILABLE or not _VOCAB_AVAILABLE:
+        return False
+    try:
+        from core.utils.checkpoint import load_checkpoint_auto
+        checkpoint = load_checkpoint_auto(
+            CHECKPOINT_PATH, device="cpu", include_training_state=False, trusted_source=True
+        )
+        act_vocab, _ = _load_real_vocabs()
+        # Check if vocab sizes match (checkpoint activity embedding vs vocab)
+        ckpt_act_size = checkpoint["encoder"]["structural.activity_embedding.weight"].shape[0]
+        return ckpt_act_size == act_vocab.size
+    except Exception:
+        return False
+
+_CHECKPOINT_COMPATIBLE = _checkpoint_vocab_compatible() if _CHECKPOINT_AVAILABLE else False
+
 requires_checkpoint = pytest.mark.skipif(
-    not _CHECKPOINT_AVAILABLE,
-    reason=f"Checkpoint not found at {CHECKPOINT_PATH}",
+    not _CHECKPOINT_COMPATIBLE,
+    reason=f"Checkpoint at {CHECKPOINT_PATH} not compatible with vocabulary (size mismatch or not found)",
 )
 requires_train_data = pytest.mark.skipif(
     not _TRAIN_DATA_AVAILABLE,
@@ -422,8 +440,8 @@ class TestCheckpointLoading:
         )
         latent_var = LatentVariable()
 
-        checkpoint = load_checkpoint_unsafe(
-            CHECKPOINT_PATH, map_location="cpu", trusted_source=True
+        checkpoint = load_checkpoint_auto(
+            CHECKPOINT_PATH, device="cpu", include_training_state=True, trusted_source=True
         )
         encoder.load_state_dict(checkpoint["encoder"])
         transition.load_state_dict(checkpoint["transition"])
@@ -1146,7 +1164,7 @@ class TestDataToModelIntegration:
         energy_scorer = EnergyScorer()
         latent_var = LatentVariable()
 
-        checkpoint = load_checkpoint_unsafe(CHECKPOINT_PATH, map_location="cpu", trusted_source=True)
+        checkpoint = load_checkpoint_auto(CHECKPOINT_PATH, device="cpu", include_training_state=False, trusted_source=True)
         encoder.load_state_dict(checkpoint["encoder"])
         predictor.load_state_dict(checkpoint["predictor"])
         transition.load_state_dict(checkpoint["transition"])

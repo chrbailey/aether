@@ -122,7 +122,7 @@ npm test          # 99 tests — governance, modulation, bridge, tools, vocab-aw
 
 ```bash
 pip install -e ".[dev]"              # Editable install with test dependencies
-python -m pytest core/tests/ -v      # 303 tests — encoder, world model, critic, training, data
+python -m pytest core/tests/ -v      # 335 tests — encoder, world model, critic, training, data
 ```
 
 ### Run Both Together

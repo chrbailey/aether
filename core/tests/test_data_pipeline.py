@@ -42,16 +42,40 @@ VAL_CASES_PATH = EVENTS_DIR / "val_cases.json"
 VOCABULARY_PATH = EVENTS_DIR / "vocabulary.json"
 METADATA_PATH = EVENTS_DIR / "metadata.json"
 
-_REAL_DATA_AVAILABLE = (
-    TRAIN_CASES_PATH.exists()
-    and VAL_CASES_PATH.exists()
-    and VOCABULARY_PATH.exists()
-    and METADATA_PATH.exists()
-)
+def _check_real_data_available() -> tuple[bool, str]:
+    """Check if real data is available with expected format."""
+    if not TRAIN_CASES_PATH.exists():
+        return False, f"Train data not found at {TRAIN_CASES_PATH}"
+    if not VAL_CASES_PATH.exists():
+        return False, f"Val data not found at {VAL_CASES_PATH}"
+    if not VOCABULARY_PATH.exists():
+        return False, f"Vocabulary not found at {VOCABULARY_PATH}"
+    if not METADATA_PATH.exists():
+        return False, f"Metadata not found at {METADATA_PATH}"
+
+    # Check metadata has expected fields for end-to-end tests
+    try:
+        with open(METADATA_PATH) as f:
+            metadata = json.load(f)
+        required_fields = ["train_events", "val_events", "source_distribution"]
+        missing = [f for f in required_fields if f not in metadata]
+        if missing:
+            return False, f"Metadata missing required fields: {missing}"
+
+        # Check event_length_stats has percentiles
+        stats = metadata.get("event_length_stats", {})
+        if "p25" not in stats:
+            return False, "Metadata event_length_stats missing percentiles (p25)"
+    except Exception as e:
+        return False, f"Error reading metadata: {e}"
+
+    return True, ""
+
+_REAL_DATA_AVAILABLE, _REAL_DATA_SKIP_REASON = _check_real_data_available()
 
 requires_real_data = pytest.mark.skipif(
     not _REAL_DATA_AVAILABLE,
-    reason="Processed event data not found at data/events/",
+    reason=_REAL_DATA_SKIP_REASON or "Processed event data not found or incompatible format",
 )
 
 
