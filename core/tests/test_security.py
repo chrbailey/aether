@@ -249,3 +249,210 @@ class TestModelIntegrity:
         assert not torch.isnan(out["logits"]).any(), "NaN in output logits"
         assert not torch.isinf(out["logits"]).any(), "Inf in output logits"
         assert out["probs"].sum(dim=-1).allclose(torch.ones(1)), "Probs don't sum to 1"
+
+
+class TestSafeTensorsFormat:
+    """Tests for SafeTensors checkpoint format (secure alternative to pickle)."""
+
+    def test_safetensors_roundtrip(self, tmp_path: Path):
+        """Verify SafeTensors save/load produces identical weights."""
+        import torch
+        import torch.nn as nn
+        from core.utils.checkpoint import (
+            save_checkpoint_safetensors,
+            load_checkpoint_safetensors,
+        )
+
+        # Create test models
+        encoder = nn.Linear(10, 5)
+        transition = nn.Linear(5, 5)
+
+        state_dicts = {
+            "encoder": encoder.state_dict(),
+            "transition": transition.state_dict(),
+        }
+
+        # Save to SafeTensors
+        save_path = tmp_path / "test.safetensors"
+        save_checkpoint_safetensors(save_path, state_dicts)
+
+        assert save_path.exists(), "SafeTensors file not created"
+
+        # Load and compare
+        loaded = load_checkpoint_safetensors(save_path, device="cpu", model_keys=["encoder", "transition"])
+
+        assert "encoder" in loaded
+        assert "transition" in loaded
+
+        # Compare tensors
+        for key in encoder.state_dict():
+            assert torch.allclose(
+                state_dicts["encoder"][key],
+                loaded["encoder"][key],
+            ), f"Mismatch in encoder.{key}"
+
+    def test_safetensors_cannot_execute_code(self, tmp_path: Path):
+        """Verify SafeTensors format is immune to code injection.
+
+        Unlike pickle, SafeTensors only stores raw tensor data with a
+        simple header. There's no way to embed executable code.
+        """
+        import torch
+        from core.utils.checkpoint import (
+            save_checkpoint_safetensors,
+            load_checkpoint_safetensors,
+        )
+
+        # Create a simple checkpoint
+        state_dicts = {"model": {"weight": torch.randn(3, 3)}}
+        save_path = tmp_path / "safe.safetensors"
+        save_checkpoint_safetensors(save_path, state_dicts)
+
+        # Reading the raw file should show it's just tensor data
+        with open(save_path, "rb") as f:
+            content = f.read()
+
+        # SafeTensors files cannot contain pickle opcodes or Python bytecode
+        dangerous_patterns = [
+            b"__reduce__",
+            b"exec(",
+            b"eval(",
+            b"os.system",
+            b"subprocess",
+            b"import os",
+        ]
+
+        for pattern in dangerous_patterns:
+            assert pattern not in content, (
+                f"SafeTensors file contains suspicious pattern: {pattern}"
+            )
+
+        # Should load without any code execution
+        loaded = load_checkpoint_safetensors(save_path, device="cpu", model_keys=["model"])
+        assert "model" in loaded
+
+    def test_safetensors_with_metadata(self, tmp_path: Path):
+        """Test that string metadata is preserved in SafeTensors format."""
+        import torch
+        from safetensors.torch import load_file
+        from core.utils.checkpoint import save_checkpoint_safetensors
+
+        state_dicts = {"model": {"w": torch.ones(2, 2)}}
+        metadata = {"epoch": "10", "version": "1.0.0"}
+
+        save_path = tmp_path / "with_meta.safetensors"
+        save_checkpoint_safetensors(save_path, state_dicts, metadata=metadata)
+
+        # Load with safetensors directly to check metadata
+        # (our load function doesn't expose metadata currently)
+        from safetensors import safe_open
+        with safe_open(str(save_path), framework="pt") as f:
+            meta = f.metadata()
+            assert meta.get("epoch") == "10"
+            assert meta.get("version") == "1.0.0"
+
+
+class TestCheckpointAutoDetection:
+    """Tests for auto-detection of checkpoint formats."""
+
+    def test_auto_detects_safetensors(self, tmp_path: Path):
+        """Verify load_checkpoint_auto prefers SafeTensors when available."""
+        import torch
+        import torch.nn as nn
+        from core.utils.checkpoint import (
+            save_checkpoint_safetensors,
+            load_checkpoint_auto,
+        )
+
+        model = nn.Linear(4, 2)
+        save_checkpoint_safetensors(
+            tmp_path / "model.safetensors",
+            {"encoder": model.state_dict()},
+        )
+
+        # Auto-load should find the SafeTensors file
+        loaded = load_checkpoint_auto(
+            tmp_path / "model",
+            device="cpu",
+            include_training_state=False,
+            trusted_source=True,
+            model_keys=["encoder"],
+        )
+
+        assert "encoder" in loaded
+        assert "weight" in loaded["encoder"]
+
+    def test_auto_falls_back_to_legacy(self, tmp_path: Path):
+        """Verify auto-detection falls back to .pt with warning."""
+        import warnings
+        import torch
+        import torch.nn as nn
+        from core.utils.checkpoint import load_checkpoint_auto
+
+        model = nn.Linear(4, 2)
+        torch.save(
+            {"encoder": model.state_dict()},
+            tmp_path / "legacy.pt",
+        )
+
+        # Should load legacy with deprecation warning
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            loaded = load_checkpoint_auto(
+                tmp_path / "legacy",
+                device="cpu",
+                include_training_state=False,
+                trusted_source=True,
+                model_keys=["encoder"],
+            )
+
+            assert len(w) == 1
+            assert "legacy pickle" in str(w[0].message).lower()
+
+        assert "encoder" in loaded
+
+    def test_auto_requires_trust_for_legacy(self, tmp_path: Path):
+        """Verify untrusted legacy checkpoints are rejected."""
+        import torch
+        import torch.nn as nn
+        from core.utils.checkpoint import load_checkpoint_auto
+
+        model = nn.Linear(4, 2)
+        torch.save({"encoder": model.state_dict()}, tmp_path / "untrusted.pt")
+
+        with pytest.raises(ValueError, match="trusted_source"):
+            load_checkpoint_auto(
+                tmp_path / "untrusted",
+                device="cpu",
+                trusted_source=False,  # Should fail
+                model_keys=["encoder"],
+            )
+
+    def test_safetensors_loads_without_trust_flag(self, tmp_path: Path):
+        """Verify SafeTensors can load without trusted_source=True.
+
+        SafeTensors is secure by design - no code execution possible.
+        """
+        import torch
+        import torch.nn as nn
+        from core.utils.checkpoint import (
+            save_checkpoint_safetensors,
+            load_checkpoint_auto,
+        )
+
+        model = nn.Linear(4, 2)
+        save_checkpoint_safetensors(
+            tmp_path / "secure.safetensors",
+            {"encoder": model.state_dict()},
+        )
+
+        # Should load even without trusted_source=True
+        loaded = load_checkpoint_auto(
+            tmp_path / "secure",
+            device="cpu",
+            include_training_state=False,
+            trusted_source=False,  # SafeTensors doesn't need this
+            model_keys=["encoder"],
+        )
+
+        assert "encoder" in loaded
