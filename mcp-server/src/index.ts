@@ -29,6 +29,8 @@ import {
   getCalibrationSchema,
   getAutonomyLevel,
   getAutonomyLevelSchema,
+  getProductionMetrics,
+  getProductionMetricsSchema,
   setTrustState,
 } from './tools/calibration.js';
 
@@ -90,6 +92,18 @@ server.tool(
   getAutonomyLevelSchema.shape,
   () => {
     const result = getAutonomyLevel();
+    return {
+      content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+    };
+  },
+);
+
+server.tool(
+  'get_production_metrics',
+  'Get production monitoring metrics: prediction counts, latency percentiles (p50/p95/p99), calibration drift alerts, and uptime.',
+  getProductionMetricsSchema.shape,
+  async () => {
+    const result = await getProductionMetrics();
     return {
       content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
     };

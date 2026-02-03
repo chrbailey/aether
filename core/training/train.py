@@ -17,7 +17,12 @@ from torch.utils.data import DataLoader
 
 from ..critic.calibration import CalibrationTracker
 from ..encoder.event_encoder import EventEncoder
-from ..utils.checkpoint import load_checkpoint_unsafe
+from ..utils.checkpoint import (
+    load_checkpoint_auto,
+    load_checkpoint_unsafe,
+    save_checkpoint_safetensors,
+    save_training_state,
+)
 from ..encoder.vocabulary import ActivityVocabulary
 from ..world_model.energy import EnergyScorer
 from ..world_model.hierarchical import HierarchicalPredictor
@@ -444,15 +449,15 @@ class AetherTrainer:
                 import math
                 if not math.isnan(val_loss) and val_loss > 0 and val_loss < self._best_val_loss:
                     self._best_val_loss = val_loss
-                    self.save_checkpoint("best.pt")
+                    self.save_checkpoint("best")
                     logger.info(f"  New best model saved (ECE={val_loss:.4f})")
 
             # Save periodic checkpoint
             if (epoch + 1) % 10 == 0:
-                self.save_checkpoint(f"epoch_{epoch + 1}.pt")
+                self.save_checkpoint(f"epoch_{epoch + 1}")
 
         # Save final checkpoint
-        self.save_checkpoint("final.pt")
+        self.save_checkpoint("final")
 
         # Log final calibration from validation (if available)
         if val_loader is not None:
@@ -475,47 +480,104 @@ class AetherTrainer:
 
         return history
 
-    def save_checkpoint(self, filename: str) -> Path:
+    def save_checkpoint(self, filename: str, format: str = "safetensors") -> Path:
         """Save model checkpoint.
 
         Args:
-            filename: Checkpoint filename.
+            filename: Checkpoint filename (without extension for SafeTensors).
+            format: "safetensors" (default, secure) or "legacy" (pickle .pt).
 
         Returns:
-            Path to saved checkpoint.
+            Path to saved checkpoint (SafeTensors file for new format).
+
+        Note:
+            SafeTensors format saves two files:
+            - {name}.safetensors: Model weights (secure, no pickle)
+            - {name}.training.pt: Optimizer/scheduler state (pickle)
         """
-        path = self.checkpoint_dir / filename
-        torch.save(
-            {
-                "epoch": self._epoch,
+        # Remove extension if provided (we'll add the right one)
+        base_name = filename.rsplit(".", 1)[0] if "." in filename else filename
+
+        if format == "safetensors":
+            # Save model weights to SafeTensors (secure)
+            model_states = {
                 "encoder": self.encoder.state_dict(),
                 "transition": self.transition.state_dict(),
                 "energy": self.energy.state_dict(),
                 "predictor": self.predictor.state_dict(),
                 "latent_var": self.latent_var.state_dict(),
-                "optimizer": self.optimizer.state_dict(),
-                "scheduler": self.scheduler.state_dict(),
-                "best_val_loss": self._best_val_loss,
-            },
-            path,
-        )
-        logger.info(f"Checkpoint saved: {path}")
-        return path
+            }
+            safetensors_path = save_checkpoint_safetensors(
+                self.checkpoint_dir / f"{base_name}.safetensors",
+                model_states,
+                metadata={"epoch": str(self._epoch)},
+            )
 
-    def load_checkpoint(self, path: Path | str) -> None:
+            # Save training state to pickle (for resume capability)
+            save_training_state(
+                self.checkpoint_dir / f"{base_name}.training.pt",
+                optimizer=self.optimizer,
+                scheduler=self.scheduler,
+                epoch=self._epoch,
+                best_val_loss=self._best_val_loss,
+            )
+
+            logger.info(f"Checkpoint saved: {safetensors_path}")
+            return safetensors_path
+        else:
+            # Legacy format (backward compatibility)
+            path = self.checkpoint_dir / f"{base_name}.pt"
+            torch.save(
+                {
+                    "epoch": self._epoch,
+                    "encoder": self.encoder.state_dict(),
+                    "transition": self.transition.state_dict(),
+                    "energy": self.energy.state_dict(),
+                    "predictor": self.predictor.state_dict(),
+                    "latent_var": self.latent_var.state_dict(),
+                    "optimizer": self.optimizer.state_dict(),
+                    "scheduler": self.scheduler.state_dict(),
+                    "best_val_loss": self._best_val_loss,
+                },
+                path,
+            )
+            logger.info(f"Legacy checkpoint saved: {path}")
+            return path
+
+    def load_checkpoint(self, path: Path | str, trusted_source: bool = True) -> None:
         """Load model checkpoint.
 
+        Supports both SafeTensors and legacy .pt formats with auto-detection.
+
         Args:
-            path: Path to checkpoint file.
+            path: Path to checkpoint file (with or without extension).
+            trusted_source: Whether the checkpoint is from a trusted source.
+                Required for loading training state (optimizer/scheduler).
+
+        Note:
+            For SafeTensors format, pass the base name without extension.
+            E.g., "best" will load "best.safetensors" + "best.training.pt".
         """
-        checkpoint = load_checkpoint_unsafe(path, map_location=self.device, trusted_source=True)
+        checkpoint = load_checkpoint_auto(
+            path,
+            device=self.device,
+            include_training_state=True,
+            trusted_source=trusted_source,
+        )
+
+        # Load model weights
         self.encoder.load_state_dict(checkpoint["encoder"])
         self.transition.load_state_dict(checkpoint["transition"])
         self.energy.load_state_dict(checkpoint["energy"])
         self.predictor.load_state_dict(checkpoint["predictor"])
         self.latent_var.load_state_dict(checkpoint["latent_var"])
-        self.optimizer.load_state_dict(checkpoint["optimizer"])
-        self.scheduler.load_state_dict(checkpoint["scheduler"])
-        self._epoch = checkpoint["epoch"]
+
+        # Load training state if available
+        if "optimizer" in checkpoint:
+            self.optimizer.load_state_dict(checkpoint["optimizer"])
+        if "scheduler" in checkpoint:
+            self.scheduler.load_state_dict(checkpoint["scheduler"])
+
+        self._epoch = checkpoint.get("epoch", 0)
         self._best_val_loss = checkpoint.get("best_val_loss", float("inf"))
         logger.info(f"Checkpoint loaded: {path} (epoch {self._epoch})")

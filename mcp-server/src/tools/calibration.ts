@@ -21,6 +21,9 @@ export const getCalibrationSchema = z.object({
 /** Schema for get_autonomy_level tool input */
 export const getAutonomyLevelSchema = z.object({});
 
+/** Schema for get_production_metrics tool input */
+export const getProductionMetricsSchema = z.object({});
+
 export type GetCalibrationInput = z.infer<typeof getCalibrationSchema>;
 
 /** In-memory trust state (production would persist to Pinecone) */
@@ -72,4 +75,18 @@ export function getAutonomyLevel(): {
     summary: summarizeTrustState(state),
     state,
   };
+}
+
+/**
+ * Get production metrics from the inference server.
+ * Returns latency percentiles, prediction counts, and calibration drift alerts.
+ */
+export async function getProductionMetrics(): Promise<pythonBridge.ProductionMetrics> {
+  const healthy = await pythonBridge.healthCheck();
+
+  if (!healthy) {
+    return pythonBridge.fallbackMetrics();
+  }
+
+  return pythonBridge.getMetrics();
 }

@@ -20,7 +20,11 @@ from torch.utils.data import DataLoader
 
 from core.encoder.event_encoder import EventEncoder
 from core.encoder.vocabulary import ActivityVocabulary, ResourceVocabulary
-from core.utils.checkpoint import load_checkpoint_unsafe
+from core.utils.checkpoint import (
+    load_checkpoint_auto,
+    load_checkpoint_safetensors,
+    load_training_state,
+)
 from core.world_model.energy import EnergyScorer
 from core.world_model.hierarchical import HierarchicalPredictor
 from core.world_model.latent import LatentVariable
@@ -224,22 +228,32 @@ class TestAetherTrainer:
 
 
 class TestCheckpointIO:
-    """Test checkpoint save/load round-trips."""
+    """Test checkpoint save/load round-trips with SafeTensors format."""
 
     def test_save_creates_file_with_expected_keys(
         self, mock_activity_vocab, mock_resource_vocab, tmp_output_dir
     ):
+        """Verify save creates both SafeTensors and training state files."""
         trainer = _build_trainer(mock_activity_vocab, mock_resource_vocab, tmp_output_dir)
-        path = trainer.save_checkpoint("test_checkpoint.pt")
+        path = trainer.save_checkpoint("test_checkpoint")
 
+        # SafeTensors file should exist and contain model state_dicts
         assert path.exists()
-        checkpoint = load_checkpoint_unsafe(path, trusted_source=True)
-        expected_keys = {
-            "epoch", "encoder", "transition", "energy",
-            "predictor", "latent_var", "optimizer", "scheduler",
-            "best_val_loss",
-        }
-        assert expected_keys == set(checkpoint.keys())
+        assert path.suffix == ".safetensors"
+
+        model_state = load_checkpoint_safetensors(
+            path, device="cpu",
+            model_keys=["encoder", "transition", "energy", "predictor", "latent_var"]
+        )
+        expected_model_keys = {"encoder", "transition", "energy", "predictor", "latent_var"}
+        assert expected_model_keys == set(model_state.keys())
+
+        # Training state file should exist with optimizer/scheduler/epoch
+        training_path = path.with_suffix(".training.pt")
+        assert training_path.exists()
+        training_state = load_training_state(training_path, trusted_source=True)
+        expected_training_keys = {"optimizer", "scheduler", "epoch", "best_val_loss"}
+        assert expected_training_keys <= set(training_state.keys())
 
     def test_load_restores_state(
         self, mock_activity_vocab, mock_resource_vocab, tmp_output_dir
@@ -250,20 +264,23 @@ class TestCheckpointIO:
         trainer.train_epoch(loader)
 
         original_epoch = trainer._epoch
-        path = trainer.save_checkpoint("restore_test.pt")
+        path = trainer.save_checkpoint("restore_test")
 
-        # Create a fresh trainer and load
+        # Create a fresh trainer and load (pass base name, not full path)
         trainer2 = _build_trainer(mock_activity_vocab, mock_resource_vocab, tmp_output_dir)
         assert trainer2._epoch == 0
-        trainer2.load_checkpoint(path)
+        trainer2.load_checkpoint(tmp_output_dir / "restore_test")
         assert trainer2._epoch == original_epoch
 
     def test_save_tracks_best_val_loss(
         self, mock_activity_vocab, mock_resource_vocab, tmp_output_dir
     ):
+        """Verify best_val_loss is saved in training state file."""
         trainer = _build_trainer(mock_activity_vocab, mock_resource_vocab, tmp_output_dir)
         trainer._best_val_loss = 0.042
-        path = trainer.save_checkpoint("best_loss_test.pt")
+        path = trainer.save_checkpoint("best_loss_test")
 
-        checkpoint = load_checkpoint_unsafe(path, trusted_source=True)
-        assert checkpoint["best_val_loss"] == pytest.approx(0.042)
+        # Best val loss is in training state, not SafeTensors
+        training_path = path.with_suffix(".training.pt")
+        training_state = load_training_state(training_path, trusted_source=True)
+        assert training_state["best_val_loss"] == pytest.approx(0.042)

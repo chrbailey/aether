@@ -8,14 +8,19 @@ Endpoints:
     GET  /calibration — current calibration metrics
     POST /outcomes — receive actual outcomes for calibration feedback
     GET  /health   — health check
+    GET  /metrics  — production metrics (latency, counts, calibration drift)
 """
 
 from __future__ import annotations
 
 import logging
+import statistics
+import time
 import uuid
+from collections import deque
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -129,6 +134,21 @@ class HealthResponse(BaseModel):
     device: str
 
 
+class MetricsResponse(BaseModel):
+    """Production metrics for monitoring."""
+    predictions_total: int
+    predictions_last_hour: int
+    avg_latency_ms: float
+    p50_latency_ms: float
+    p95_latency_ms: float
+    p99_latency_ms: float
+    current_ece: float
+    current_mcc: float
+    calibration_drift_detected: bool
+    uptime_seconds: float
+    model_version: str
+
+
 class OutcomeReport(BaseModel):
     """Report actual outcome for calibration feedback."""
     prediction_id: str
@@ -144,6 +164,89 @@ class OutcomeResponse(BaseModel):
     calibration_updated: bool
     predictions_in_window: int
     current_accuracy: float
+
+
+# ---------------------------------------------------------------------------
+# Production Metrics Tracker
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ProductionMetrics:
+    """Simple metrics collection for production monitoring.
+
+    Uses in-memory storage with fixed-size deques. For high-scale production,
+    replace with Prometheus or similar time-series database.
+    """
+    start_time: float = field(default_factory=time.time)
+    predictions_total: int = 0
+
+    # Rolling window of latencies (last 1000 predictions)
+    latencies_ms: deque = field(default_factory=lambda: deque(maxlen=1000))
+
+    # Hourly prediction counts (last 24 hours)
+    hourly_counts: deque = field(default_factory=lambda: deque(maxlen=24))
+    current_hour_count: int = 0
+    current_hour: int = field(default_factory=lambda: datetime.now(timezone.utc).hour)
+
+    # Calibration tracking
+    ece_history: deque = field(default_factory=lambda: deque(maxlen=100))
+    mcc_history: deque = field(default_factory=lambda: deque(maxlen=100))
+    calibration_baseline_ece: float = 0.15  # Threshold for drift detection
+
+    def record_prediction(self, latency_ms: float) -> None:
+        """Record a prediction with its latency."""
+        self.predictions_total += 1
+        self.latencies_ms.append(latency_ms)
+
+        # Track hourly counts
+        current_hour = datetime.now(timezone.utc).hour
+        if current_hour != self.current_hour:
+            self.hourly_counts.append(self.current_hour_count)
+            self.current_hour_count = 0
+            self.current_hour = current_hour
+        self.current_hour_count += 1
+
+    def record_calibration(self, ece: float, mcc: float) -> None:
+        """Record calibration metrics."""
+        self.ece_history.append(ece)
+        self.mcc_history.append(mcc)
+
+    def get_metrics(self) -> dict:
+        """Get current metrics snapshot."""
+        latencies = list(self.latencies_ms)
+
+        if latencies:
+            sorted_latencies = sorted(latencies)
+            n = len(sorted_latencies)
+            avg_latency = statistics.mean(latencies)
+            p50 = sorted_latencies[int(n * 0.5)]
+            p95 = sorted_latencies[min(int(n * 0.95), n - 1)]
+            p99 = sorted_latencies[min(int(n * 0.99), n - 1)]
+        else:
+            avg_latency = p50 = p95 = p99 = 0.0
+
+        # Current calibration
+        current_ece = self.ece_history[-1] if self.ece_history else 0.0
+        current_mcc = self.mcc_history[-1] if self.mcc_history else 0.0
+
+        # Drift detection: ECE increased by >50% from baseline
+        drift_detected = current_ece > self.calibration_baseline_ece * 1.5
+
+        # Predictions in last hour
+        predictions_last_hour = self.current_hour_count
+
+        return {
+            "predictions_total": self.predictions_total,
+            "predictions_last_hour": predictions_last_hour,
+            "avg_latency_ms": round(avg_latency, 2),
+            "p50_latency_ms": round(p50, 2),
+            "p95_latency_ms": round(p95, 2),
+            "p99_latency_ms": round(p99, 2),
+            "current_ece": round(current_ece, 4),
+            "current_mcc": round(current_mcc, 4),
+            "calibration_drift_detected": drift_detected,
+            "uptime_seconds": round(time.time() - self.start_time, 1),
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -286,6 +389,7 @@ class AetherInferenceState:
 # ---------------------------------------------------------------------------
 
 state = AetherInferenceState()
+metrics = ProductionMetrics()
 
 # In-memory calibration tracker (production would use persistent storage)
 calibration_data: dict[str, Any] = {
@@ -393,9 +497,30 @@ async def health() -> HealthResponse:
     )
 
 
+@app.get("/metrics", response_model=MetricsResponse)
+async def get_metrics() -> MetricsResponse:
+    """Production metrics endpoint for monitoring."""
+    m = metrics.get_metrics()
+    return MetricsResponse(
+        predictions_total=m["predictions_total"],
+        predictions_last_hour=m["predictions_last_hour"],
+        avg_latency_ms=m["avg_latency_ms"],
+        p50_latency_ms=m["p50_latency_ms"],
+        p95_latency_ms=m["p95_latency_ms"],
+        p99_latency_ms=m["p99_latency_ms"],
+        current_ece=m["current_ece"],
+        current_mcc=m["current_mcc"],
+        calibration_drift_detected=m["calibration_drift_detected"],
+        uptime_seconds=m["uptime_seconds"],
+        model_version=MODEL_VERSION,
+    )
+
+
 @app.post("/predict", response_model=PredictResponse)
 async def predict(request: PredictRequest) -> PredictResponse:
     """Generate prediction with uncertainty for an event sequence."""
+    start_time = time.time()
+
     if not state.loaded:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -506,6 +631,10 @@ async def predict(request: PredictRequest) -> PredictResponse:
 
     now = datetime.now(timezone.utc).isoformat()
 
+    # Record metrics
+    latency_ms = (time.time() - start_time) * 1000
+    metrics.record_prediction(latency_ms)
+
     return PredictResponse(
         predictionId=str(uuid.uuid4()),
         caseId=request.caseId,
@@ -549,16 +678,20 @@ async def predict(request: PredictRequest) -> PredictResponse:
 @app.get("/calibration", response_model=CalibrationResponse)
 async def calibration() -> CalibrationResponse:
     """Return current calibration metrics."""
-    metrics = state.calibration_tracker.compute_metrics()
+    cal_metrics = state.calibration_tracker.compute_metrics()
+
+    # Record calibration for drift detection
+    metrics.record_calibration(cal_metrics["ece"], 0.0)  # MCC requires outcomes
+
     return CalibrationResponse(
-        ece=metrics["ece"],
-        mce=metrics["mce"],
-        brierScore=metrics["brierScore"],
-        windowSize=metrics["windowSize"],
-        windowStart=metrics["windowStart"],
-        windowEnd=metrics["windowEnd"],
+        ece=cal_metrics["ece"],
+        mce=cal_metrics["mce"],
+        brierScore=cal_metrics["brierScore"],
+        windowSize=cal_metrics["windowSize"],
+        windowStart=cal_metrics["windowStart"],
+        windowEnd=cal_metrics["windowEnd"],
         buckets=[
-            CalibrationBucketResponse(**b) for b in metrics["buckets"]
+            CalibrationBucketResponse(**b) for b in cal_metrics["buckets"]
         ],
     )
 

@@ -17,6 +17,21 @@ import type {
   UncertaintyDecomposition,
 } from '../types/predictions.js';
 
+/** Production metrics from the inference server */
+export interface ProductionMetrics {
+  predictions_total: number;
+  predictions_last_hour: number;
+  avg_latency_ms: number;
+  p50_latency_ms: number;
+  p95_latency_ms: number;
+  p99_latency_ms: number;
+  current_ece: number;
+  current_mcc: number;
+  calibration_drift_detected: boolean;
+  uptime_seconds: number;
+  model_version: string;
+}
+
 const DEFAULT_PYTHON_URL = 'http://localhost:8712';
 
 export interface PythonBridgeConfig {
@@ -102,6 +117,42 @@ export async function healthCheck(
   } catch {
     return false;
   }
+}
+
+/**
+ * Get production metrics from the Python inference server.
+ */
+export async function getMetrics(
+  config: PythonBridgeConfig = DEFAULT_CONFIG,
+): Promise<ProductionMetrics> {
+  const response = await fetchWithTimeout(`${config.url}/metrics`, {
+    method: 'GET',
+  }, config.timeoutMs);
+
+  if (!response.ok) {
+    throw new Error(`Python bridge metrics failed: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json() as Promise<ProductionMetrics>;
+}
+
+/**
+ * Provide fallback metrics when Python server is unavailable.
+ */
+export function fallbackMetrics(): ProductionMetrics {
+  return {
+    predictions_total: 0,
+    predictions_last_hour: 0,
+    avg_latency_ms: 0,
+    p50_latency_ms: 0,
+    p95_latency_ms: 0,
+    p99_latency_ms: 0,
+    current_ece: 0.25,
+    current_mcc: 0,
+    calibration_drift_detected: false,
+    uptime_seconds: 0,
+    model_version: 'unavailable',
+  };
 }
 
 /**
