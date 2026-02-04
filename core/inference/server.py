@@ -284,7 +284,7 @@ class AetherInferenceState:
         activity_vocab: ActivityVocabulary,
         resource_vocab: ResourceVocabulary,
         n_activities: int = 20,
-        n_phases: int = 6,
+        n_phases: int = 4,  # Most checkpoints trained with 4 phases
         trusted_source: bool = True,
     ) -> None:
         """Load model from checkpoint file.
@@ -304,9 +304,11 @@ class AetherInferenceState:
         self.resource_vocab = resource_vocab
 
         # Initialize model components
+        # n_attribute_features must match the checkpoint (trained with 4)
         self.encoder = EventEncoder(
             activity_vocab=activity_vocab,
             resource_vocab=resource_vocab,
+            n_attribute_features=4,
         ).to(self.device)
 
         self.transition = TransitionModel().to(self.device)
@@ -366,6 +368,7 @@ class AetherInferenceState:
         self.encoder = EventEncoder(
             activity_vocab=self.activity_vocab,
             resource_vocab=self.resource_vocab,
+            n_attribute_features=4,
         ).to(self.device)
 
         self.transition = TransitionModel().to(self.device)
@@ -551,7 +554,7 @@ async def predict(request: PredictRequest) -> PredictResponse:
             device=state.device,
         )
         attributes = torch.zeros(
-            1, seq_len, 8, device=state.device
+            1, seq_len, 4, device=state.device  # Must match n_attribute_features
         )
         time_deltas = torch.zeros(1, seq_len, device=state.device)
 

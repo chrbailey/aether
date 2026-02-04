@@ -53,10 +53,22 @@ export async function predict(
   events: AetherEvent[],
   config: PythonBridgeConfig = DEFAULT_CONFIG,
 ): Promise<PredictionWithUncertainty> {
+  // Extract caseId from first event (all events in a case share the same caseId)
+  const caseId = events[0]?.caseId ?? 'unknown';
+
+  // Transform events to only include fields the Python server expects
+  // Python EventInput: activity, resource, timestamp, attributes
+  const pythonEvents = events.map(e => ({
+    activity: e.activity,
+    resource: e.resource,
+    timestamp: e.timestamp,
+    attributes: e.attributes,
+  }));
+
   const response = await fetchWithTimeout(`${config.url}/predict`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ events }),
+    body: JSON.stringify({ caseId, events: pythonEvents }),
   }, config.timeoutMs);
 
   if (!response.ok) {
